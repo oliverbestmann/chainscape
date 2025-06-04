@@ -1,14 +1,14 @@
-use std::f32::consts::PI;
 use crate::game::movement::Movement;
 use crate::game::player::Player;
 use crate::game::rand::Rand;
 use crate::game::screens::Screen;
-use crate::{game, AppSystems};
+use crate::{AppSystems, game};
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
 use fastnoise_lite::FastNoiseLite;
 use ordered_float::OrderedFloat;
 use rand::{Rng, SeedableRng};
+use std::f32::consts::PI;
 use std::time::Duration;
 
 pub fn plugin(app: &mut App) {
@@ -54,7 +54,7 @@ impl Awaking {
     }
 }
 
-pub fn enemy_bundle(assets: &game::Assets, enemy: Enemy) -> impl Bundle {
+pub fn enemy_bundle(rand: &mut Rand, assets: &game::Assets, enemy: Enemy) -> impl Bundle {
     let radius = enemy.observe_radius;
 
     (
@@ -80,7 +80,8 @@ pub fn enemy_bundle(assets: &game::Assets, enemy: Enemy) -> impl Bundle {
                 ..default()
             },
             // slightly below the actual enemy
-            Transform::from_xyz(0.0, 0.0, -0.1),
+            Transform::from_xyz(0.0, 0.0, -0.1)
+                .with_rotation(Quat::from_rotation_z(rand.gen_range(0.0..PI * 2.0))),
         ],
     )
 }
@@ -211,8 +212,8 @@ fn awaking(
     mut enemies: Query<(Entity, &mut Transform, &mut Awaking)>,
 ) {
     for (entity, mut transform, mut awaking) in &mut enemies {
-        transform.rotation *= Quat::from_rotation_z(PI) * time.delta_secs();
-        
+        transform.rotation *= Quat::from_rotation_z(PI * time.delta_secs());
+
         if !awaking.timer.tick(time.delta()).just_finished() {
             continue;
         }

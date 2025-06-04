@@ -1,12 +1,15 @@
-use crate::game::cursor::WorldCursor;
+use crate::game::cursor::{MainCamera, WorldCursor};
 use crate::game::movement::Movement;
-use crate::{game, AppSystems,  Pause};
+use crate::{AppSystems, Pause, game};
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
 use tracing::info;
 
 pub fn plugin(app: &mut App) {
-    app.add_systems(Update, handle_player_input.in_set(AppSystems::Update));
+    app.add_systems(
+        Update,
+        (handle_player_input, camera_follow).in_set(AppSystems::Update),
+    );
 }
 
 #[derive(Component)]
@@ -57,4 +60,23 @@ pub fn handle_player_input(
 
         unpause.set(Pause(false));
     }
+}
+
+pub fn camera_follow(
+    time: Res<Time<Virtual>>,
+    mut camera: Single<&mut Transform, With<MainCamera>>,
+    players: Query<&Transform, (With<Player>, Without<MainCamera>)>,
+) {
+    let Some(player) = players.iter().next() else {
+        return;
+    };
+
+    let mut target = camera.translation.xy();
+
+    // after one second distance is 1/10th
+    let decay_rate = f32::ln(10.0);
+
+    target.smooth_nudge(&player.translation.xy(), decay_rate, time.delta_secs());
+    camera.translation.x = target.x;
+    camera.translation.y = target.y;
 }

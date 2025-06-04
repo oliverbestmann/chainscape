@@ -8,6 +8,7 @@ pub mod player;
 pub mod rand;
 pub mod screens;
 
+use crate::game::rand::Rand;
 use crate::game::screens::Screen;
 pub use assets::Assets;
 
@@ -25,7 +26,7 @@ pub fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Screen::Gameplay), spawn_game);
 }
 
-pub fn spawn_game(mut commands: Commands, assets: Res<Assets>) {
+pub fn spawn_game(mut commands: Commands, mut rand: ResMut<Rand>, assets: Res<Assets>) {
     commands.spawn((
         Name::new("Player"),
         StateScoped(Screen::Gameplay),
@@ -40,7 +41,7 @@ pub fn spawn_game(mut commands: Commands, assets: Res<Assets>) {
         commands.spawn((
             Name::new("Enemy"),
             StateScoped(Screen::Gameplay),
-            enemy::enemy_bundle(&assets, enemy),
+            enemy::enemy_bundle(rand.as_mut(), &assets, enemy),
             Transform::from_translation(pos.extend(1.0)),
         ));
     }

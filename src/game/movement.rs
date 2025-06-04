@@ -1,6 +1,6 @@
 use crate::{AppSystems, PausableSystems};
 use bevy::app::{App, Update};
-use bevy::math::{vec3, Quat, Vec2};
+use bevy::math::{Quat, Vec2, vec3};
 use bevy::prelude::{Component, IntoScheduleConfigs, Query, Res, Transform};
 use bevy::time::{Time, Virtual};
 
