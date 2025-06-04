@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="64"
+   height="64"
+   viewBox="0 0 16.933333 16.933333"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.4.2 (ebf0e940d0, 2025-05-08)"
+   sodipodi:docname="images.svg"
+   inkscape:export-filename="enemy.png"
+   inkscape:export-xdpi="192"
+   inkscape:export-ydpi="192"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#1d1d1d"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="px"
+     inkscape:export-bgcolor="#00000000"
+     inkscape:zoom="4.7370599"
+     inkscape:cx="52.56425"
+     inkscape:cy="124.86648"
+     inkscape:window-width="2080"
+     inkscape:window-height="1608"
+     inkscape:window-x="26"
+     inkscape:window-y="23"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="layer1">
+    <inkscape:page
+       x="0"
+       y="0"
+       width="16.933332"
+       height="16.933332"
+       id="page10"
+       margin="0"
+       bleed="0" />
+    <inkscape:page
+       x="0"
+       y="18.320084"
+       width="16.933332"
+       height="16.933332"
+       id="page11"
+       margin="0"
+       bleed="0"
+       inkscape:export-filename="player.png"
+       inkscape:export-xdpi="192"
+       inkscape:export-ydpi="192" />
+    <inkscape:page
+       x="0.55853909"
+       y="37.422119"
+       width="33.866665"
+       height="33.866665"
+       id="page12"
+       margin="0"
+       bleed="0"
+       inkscape:export-filename="radius.png"
+       inkscape:export-xdpi="192"
+       inkscape:export-ydpi="192" />
+  </sodipodi:namedview>
+  <defs
+     id="defs1">
+    <filter
+       style="color-interpolation-filters:sRGB"
+       inkscape:label="Blur"
+       id="filter4"
+       x="-0.22677167"
+       y="-0.22677167"
+       width="1.4535433"
+       height="1.4535433">
+      <feGaussianBlur
+         stdDeviation="0.40000000000000002"
+         result="blur"
+         id="feGaussianBlur4" />
+    </filter>
+    <filter
+       style="color-interpolation-filters:sRGB"
+       inkscape:label="Blur"
+       id="filter6"
+       x="-0.26571036"
+       y="-0.2793844"
+       width="1.5314207"
+       height="1.5587688">
+      <feGaussianBlur
+         stdDeviation="0.4 0.4"
+         result="blur"
+         id="feGaussianBlur6" />
+    </filter>
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     style="display:inline">
+    <path
+       style="fill:#f9f9f9;fill-opacity:1;stroke:none;stroke-width:0.264583;stroke-linejoin:miter;stroke-dasharray:none;filter:url(#filter4)"
+       d="M 24.341667,20.108333 26.458333,15.875 28.575,20.108333 c -2.822222,-1.37773 -1.411111,-1.377729 -4.233333,0 z"
+       id="path1"
+       sodipodi:nodetypes="cccc"
+       inkscape:export-filename="/tmp/player.png"
+       inkscape:export-xdpi="300"
+       inkscape:export-ydpi="300"
+       transform="matrix(0,2.6701713,-2.6701713,0,56.507498,-43.861532)" />
+    <path
+       style="fill:#f9f9f9;fill-opacity:1;stroke:none;stroke-width:0.706482;stroke-linejoin:miter;stroke-dasharray:none"
+       d="M 2.8148008,21.134886 14.118526,26.786747 2.8148008,32.43861 c 3.6787751,-7.535816 3.6787724,-3.767908 0,-11.303724 z"
+       id="path2"
+       sodipodi:nodetypes="cccc" />
+    <g
+       id="g10"
+       transform="matrix(1.2845212,0,0,1.2845212,-2.4089462,-2.4089461)">
+      <path
+         sodipodi:type="star"
+         style="fill:#f9f9f9;fill-opacity:1;stroke:none;stroke-width:0.264583;stroke-linejoin:miter;stroke-dasharray:none;filter:url(#filter6)"
+         id="path6"
+         inkscape:flatsided="true"
+         sodipodi:sides="5"
+         sodipodi:cx="16.113831"
+         sodipodi:cy="28.080717"
+         sodipodi:r1="1.8994437"
+         sodipodi:r2="1.5366822"
+         sodipodi:arg1="-1.5707963"
+         sodipodi:arg2="-0.9424778"
+         inkscape:rounded="0"
+         inkscape:randomized="0"
+         d="m 16.113831,26.181273 1.806478,1.312484 -0.690013,2.123642 -2.23293,0 -0.690014,-2.123642 z"
+         transform="matrix(0,2.3416696,-2.3416696,0,73.797694,-29.266601)"
+         inkscape:transform-center-x="-0.42473311" />
+      <path
+         sodipodi:type="star"
+         style="fill:#f9f9f9;fill-opacity:1;stroke:none;stroke-width:0.264583;stroke-linejoin:miter;stroke-dasharray:none"
+         id="path5"
+         inkscape:flatsided="true"
+         sodipodi:sides="5"
+         sodipodi:cx="16.113831"
+         sodipodi:cy="28.080717"
+         sodipodi:r1="1.8994437"
+         sodipodi:r2="1.5366822"
+         sodipodi:arg1="-1.5707963"
+         sodipodi:arg2="-0.9424778"
+         inkscape:rounded="0"
+         inkscape:randomized="0"
+         d="m 16.113831,26.181273 1.806478,1.312484 -0.690013,2.123642 -2.23293,0 -0.690014,-2.123642 z"
+         transform="matrix(0,2.3416696,-2.3416696,0,73.797694,-29.266601)"
+         inkscape:transform-center-x="-0.42473311"
+         inkscape:export-filename="/tmp/enemy-off.png"
+         inkscape:export-xdpi="300"
+         inkscape:export-ydpi="300" />
+    </g>
+    <circle
+       style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.691876;stroke-linejoin:miter;stroke-dasharray:none"
+       id="path9"
+       cx="17.491871"
+       cy="54.35545"
+       r="16.933332"
+       inkscape:export-filename="/tmp/radius.png"
+       inkscape:export-xdpi="363.29498"
+       inkscape:export-ydpi="363.29498" />
+  </g>
+</svg>
