@@ -1,15 +1,25 @@
+use std::f32::consts::PI;
 use crate::game::movement::Movement;
 use crate::game::player::Player;
+use crate::game::rand::Rand;
 use crate::game::screens::Screen;
 use crate::{game, AppSystems};
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
+use fastnoise_lite::FastNoiseLite;
+use ordered_float::OrderedFloat;
 use rand::{Rng, SeedableRng};
+use std::time::Duration;
 
 pub fn plugin(app: &mut App) {
     app.add_systems(
         Update,
-        (observe_surrounding, enemy_sync_image)
+        (
+            observe_surrounding,
+            enemy_sync_image,
+            awaking,
+            hunt_player_or_sleep,
+        )
             .run_if(in_state(Screen::Gameplay))
             .in_set(AppSystems::Update),
     );
@@ -23,6 +33,26 @@ pub struct Enemy {
 
 #[derive(Component)]
 pub struct Sleeping;
+
+#[derive(Component)]
+pub struct Awake {
+    pub since: Duration,
+    pub reorient: Timer,
+}
+
+#[derive(Component)]
+pub struct Awaking {
+    // awake once the timer hits zero
+    pub timer: Timer,
+}
+
+impl Awaking {
+    pub fn new(delay_secs: f32) -> Self {
+        Self {
+            timer: Timer::new(Duration::from_secs_f32(delay_secs), TimerMode::Once),
+        }
+    }
+}
 
 pub fn enemy_bundle(assets: &game::Assets, enemy: Enemy) -> impl Bundle {
     let radius = enemy.observe_radius;
@@ -44,8 +74,8 @@ pub fn enemy_bundle(assets: &game::Assets, enemy: Enemy) -> impl Bundle {
             Name::new("Radius"),
             Sprite {
                 image: assets.radius.clone(),
-                custom_size: Some(Vec2::splat(radius)),
-                color: Color::srgba(1.0, 1.0, 1.0, 0.02),
+                custom_size: Some(Vec2::splat(radius) * 2.0),
+                color: Color::srgba(1.0, 1.0, 1.0, 0.01),
                 anchor: Anchor::Center,
                 ..default()
             },
@@ -55,16 +85,27 @@ pub fn enemy_bundle(assets: &game::Assets, enemy: Enemy) -> impl Bundle {
     )
 }
 
-const COLOR_AWAKE: Color = Color::srgba(0.5, 0.5, 0.5, 1.0);
-const COLOR_SLEEPING: Color = Color::srgba(0.9, 0.9, 0.9, 1.0);
+const COLOR_AWAKE: Color = Color::srgba(1.0, 0.1, 0.1, 1.0);
+const COLOR_SLEEPING: Color = Color::srgba(0.9, 0.9, 0.9, 0.75);
 
-fn enemy_sync_image(mut enemies: Query<(&mut Sprite, Option<&Sleeping>), With<Enemy>>) {
-    for (mut sprite, sleeping) in &mut enemies {
-        let color = if sleeping.is_some() {
-            COLOR_SLEEPING
-        } else {
-            COLOR_AWAKE
+fn enemy_sync_image(
+    time: Res<Time<Virtual>>,
+    mut enemies: Query<(&mut Sprite, Option<&Awake>), With<Enemy>>,
+) {
+    let noise = FastNoiseLite::new();
+
+    for (mut sprite, awake) in &mut enemies {
+        let color = match awake {
+            Some(awake) => {
+                let age = time.elapsed_secs() - awake.since.as_secs_f32();
+                let amount = noise.get_noise_2d(0.0, age);
+                let alpha = amount.abs() * 0.2 + 0.8;
+                COLOR_AWAKE.with_alpha(alpha)
+            }
+
+            None => COLOR_SLEEPING,
         };
+
         if sprite.color != color {
             sprite.color = color;
         }
@@ -109,27 +150,126 @@ pub fn generate_positions(
 }
 
 fn observe_surrounding(
+    mut rand: ResMut<Rand>,
     mut commands: Commands,
-    mut enemies: Query<(Entity, &Transform, &mut Movement), With<Enemy>>,
+    mut enemies: Query<(Entity, &Enemy, &Transform), With<Sleeping>>,
+    query_players: Query<&Transform, With<Player>>,
+    query_runners: Query<&Transform, (With<Enemy>, With<Awake>)>,
+) {
+    enum Other<'a> {
+        Player(&'a Transform),
+        Runner(&'a Transform),
+    }
+
+    impl<'a> Other<'a> {
+        fn position(&self) -> Vec2 {
+            match self {
+                Other::Player(tr) => tr.translation.xy(),
+                Other::Runner(tr) => tr.translation.xy(),
+            }
+        }
+    }
+
+    let others: Vec<_> = query_players
+        .iter()
+        .map(Other::Player)
+        .chain(query_runners.iter().map(Other::Runner))
+        .collect();
+
+    for (enemy_id, enemy, enemy_transform) in &mut enemies {
+        // get the nearest entity to this one
+        let Some(other) = others.iter().min_by_key(|other| {
+            OrderedFloat(other.position().distance(enemy_transform.translation.xy()))
+        }) else {
+            continue;
+        };
+
+        // get distance to the player
+        let offset = other.position() - enemy_transform.translation.xy();
+
+        let (max_distance, delay_secs_range) = match other {
+            Other::Player(_player) => (enemy.observe_radius, 2.0..3.0),
+            Other::Runner(_runner) => (32.0, 0.5..1.0),
+        };
+
+        if offset.length() > max_distance {
+            // too far away, skipping this one
+            continue;
+        }
+
+        // wake the guy up and go into the direction of the player
+        commands
+            .entity(enemy_id)
+            .remove::<Sleeping>()
+            .insert(Awaking::new(rand.gen_range(delay_secs_range)));
+    }
+}
+
+fn awaking(
+    time: Res<Time<Virtual>>,
+    mut commands: Commands,
+    mut enemies: Query<(Entity, &mut Transform, &mut Awaking)>,
+) {
+    for (entity, mut transform, mut awaking) in &mut enemies {
+        transform.rotation *= Quat::from_rotation_z(PI) * time.delta_secs();
+        
+        if !awaking.timer.tick(time.delta()).just_finished() {
+            continue;
+        }
+
+        commands.entity(entity).remove::<Awaking>().insert(Awake {
+            since: time.elapsed(),
+            reorient: Timer::default(),
+        });
+    }
+}
+
+fn hunt_player_or_sleep(
+    mut rand: ResMut<Rand>,
+    time: Res<Time<Virtual>>,
+    mut enemies: Query<(&Transform, &mut Awake, &mut Movement), With<Enemy>>,
     players: Query<&Transform, With<Player>>,
 ) {
-    // should be just one player
-    for player in &players {
-        for (enemy_id, enemy_transform, mut enemy_movement) in &mut enemies {
-            // get distance to the player
-            let offset = player.translation.xy() - enemy_transform.translation.xy();
+    let players: Vec<_> = players.iter().collect();
 
-            if offset.length() > 128.0 {
-                // too far awy
-                continue;
-            }
-
-            // wake the guy up and go into the direction of the player
-            commands.entity(enemy_id).remove::<Sleeping>();
-
-            // start moving in the direction of the player, but be slightly faster
-            // than he player is.
-            enemy_movement.velocity = offset.normalize() * 110.0;
+    for (enemy_transform, mut enemy_awake, mut enemy_movement) in &mut enemies {
+        if !enemy_awake.reorient.tick(time.delta()).just_finished() {
+            continue;
         }
+
+        // re-init the timer to reorient later
+        enemy_awake.reorient = Timer::new(
+            Duration::from_secs_f32(rand.gen_range(1.0..2.0)),
+            TimerMode::Once,
+        );
+
+        // get the player that is nearest
+        let Some(player) = players.iter().min_by_key(|p| {
+            OrderedFloat(
+                p.translation
+                    .xy()
+                    .distance(enemy_transform.translation.xy()),
+            )
+        }) else {
+            continue;
+        };
+
+        // get vector to target
+        let target = player.translation.xy() + random_vec2(rand.as_mut()) * 32.0;
+        let offset = target - enemy_transform.translation.xy();
+        enemy_movement.velocity = offset.normalize() * rand.gen_range(100.0..120.0);
+    }
+}
+
+fn random_vec2(rng: &mut impl Rng) -> Vec2 {
+    loop {
+        let x = rng.gen_range(-1.0..1.0);
+        let y = rng.gen_range(-1.0..1.0);
+        let vec = vec2(x, y);
+        if vec.length_squared() > 1.0 {
+            continue;
+        }
+
+        break vec;
     }
 }

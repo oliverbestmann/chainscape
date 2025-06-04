@@ -30,7 +30,7 @@ impl Plugin for AppPlugin {
                 })
                 .set(WindowPlugin {
                     primary_window: Window {
-                        title: "Bevy Jam2025".to_string(),
+                        title: "Chainscape".to_string(),
                         fit_canvas_to_parent: true,
                         ..default()
                     }

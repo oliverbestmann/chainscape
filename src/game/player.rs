@@ -1,6 +1,6 @@
 use crate::game::cursor::WorldCursor;
 use crate::game::movement::Movement;
-use crate::{game, AppSystems, PausableSystems, Pause};
+use crate::{game, AppSystems,  Pause};
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
 use tracing::info;

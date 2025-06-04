@@ -5,6 +5,7 @@ pub mod cursor;
 pub mod enemy;
 pub mod movement;
 pub mod player;
+pub mod rand;
 pub mod screens;
 
 use crate::game::screens::Screen;
@@ -13,6 +14,7 @@ pub use assets::Assets;
 pub fn plugin(app: &mut App) {
     app.add_plugins((
         cursor::plugin,
+        rand::plugin,
         assets::plugin,
         screens::plugin,
         movement::plugin,
