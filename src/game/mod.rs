@@ -7,6 +7,7 @@ pub mod movement;
 pub mod player;
 pub mod rand;
 pub mod screens;
+pub mod squishy;
 
 use crate::game::rand::Rand;
 use crate::game::screens::Screen;
@@ -19,6 +20,7 @@ pub fn plugin(app: &mut App) {
         assets::plugin,
         screens::plugin,
         movement::plugin,
+        squishy::plugin,
         player::plugin,
         enemy::plugin,
     ));
@@ -33,7 +35,7 @@ pub fn spawn_game(mut commands: Commands, mut rand: ResMut<Rand>, assets: Res<As
         player::player_bundle(&assets),
     ));
 
-    for pos in enemy::generate_positions(1, Vec2::ZERO, 128.0, 1024.0, 32.0, 100) {
+    for pos in enemy::generate_positions(1, Vec2::ZERO, 256.0, 4096.0, 32.0, 4096) {
         let enemy = enemy::Enemy {
             observe_radius: 128.0,
         };

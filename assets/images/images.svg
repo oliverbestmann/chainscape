@@ -28,8 +28,8 @@
      inkscape:document-units="px"
      inkscape:export-bgcolor="#00000000"
      inkscape:zoom="4.7370599"
-     inkscape:cx="52.56425"
-     inkscape:cy="124.86648"
+     inkscape:cx="48.13112"
+     inkscape:cy="89.612546"
      inkscape:window-width="2080"
      inkscape:window-height="1608"
      inkscape:window-x="26"
@@ -43,7 +43,10 @@
        height="16.933332"
        id="page10"
        margin="0"
-       bleed="0" />
+       bleed="0"
+       inkscape:export-filename="enemy.png"
+       inkscape:export-xdpi="192"
+       inkscape:export-ydpi="192" />
     <inkscape:page
        x="0"
        y="18.320084"
@@ -95,6 +98,29 @@
          result="blur"
          id="feGaussianBlur6" />
     </filter>
+    <filter
+       style="color-interpolation-filters:sRGB;"
+       inkscape:label="Blur"
+       id="filter13"
+       x="-0.67279034"
+       y="-0.67279034"
+       width="2.3455807"
+       height="2.3455807">
+      <feGaussianBlur
+         stdDeviation="1.4 1.4"
+         result="fbSourceGraphic"
+         id="feGaussianBlur13" />
+      <feColorMatrix
+         result="fbSourceGraphicAlpha"
+         in="fbSourceGraphic"
+         values="0 0 0 -1 0 0 0 0 -1 0 0 0 0 -1 0 0 0 0 1 0"
+         id="feColorMatrix13" />
+      <feGaussianBlur
+         id="feGaussianBlur14"
+         stdDeviation="1.4 1.4"
+         result="blur"
+         in="fbSourceGraphic" />
+    </filter>
   </defs>
   <g
      inkscape:label="Layer 1"
@@ -115,47 +141,6 @@
        d="M 2.8148008,21.134886 14.118526,26.786747 2.8148008,32.43861 c 3.6787751,-7.535816 3.6787724,-3.767908 0,-11.303724 z"
        id="path2"
        sodipodi:nodetypes="cccc" />
-    <g
-       id="g10"
-       transform="matrix(1.2845212,0,0,1.2845212,-2.4089462,-2.4089461)">
-      <path
-         sodipodi:type="star"
-         style="fill:#f9f9f9;fill-opacity:1;stroke:none;stroke-width:0.264583;stroke-linejoin:miter;stroke-dasharray:none;filter:url(#filter6)"
-         id="path6"
-         inkscape:flatsided="true"
-         sodipodi:sides="5"
-         sodipodi:cx="16.113831"
-         sodipodi:cy="28.080717"
-         sodipodi:r1="1.8994437"
-         sodipodi:r2="1.5366822"
-         sodipodi:arg1="-1.5707963"
-         sodipodi:arg2="-0.9424778"
-         inkscape:rounded="0"
-         inkscape:randomized="0"
-         d="m 16.113831,26.181273 1.806478,1.312484 -0.690013,2.123642 -2.23293,0 -0.690014,-2.123642 z"
-         transform="matrix(0,2.3416696,-2.3416696,0,73.797694,-29.266601)"
-         inkscape:transform-center-x="-0.42473311" />
-      <path
-         sodipodi:type="star"
-         style="fill:#f9f9f9;fill-opacity:1;stroke:none;stroke-width:0.264583;stroke-linejoin:miter;stroke-dasharray:none"
-         id="path5"
-         inkscape:flatsided="true"
-         sodipodi:sides="5"
-         sodipodi:cx="16.113831"
-         sodipodi:cy="28.080717"
-         sodipodi:r1="1.8994437"
-         sodipodi:r2="1.5366822"
-         sodipodi:arg1="-1.5707963"
-         sodipodi:arg2="-0.9424778"
-         inkscape:rounded="0"
-         inkscape:randomized="0"
-         d="m 16.113831,26.181273 1.806478,1.312484 -0.690013,2.123642 -2.23293,0 -0.690014,-2.123642 z"
-         transform="matrix(0,2.3416696,-2.3416696,0,73.797694,-29.266601)"
-         inkscape:transform-center-x="-0.42473311"
-         inkscape:export-filename="/tmp/enemy-off.png"
-         inkscape:export-xdpi="300"
-         inkscape:export-ydpi="300" />
-    </g>
     <circle
        style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.691876;stroke-linejoin:miter;stroke-dasharray:none"
        id="path9"
@@ -165,5 +150,20 @@
        inkscape:export-filename="/tmp/radius.png"
        inkscape:export-xdpi="363.29498"
        inkscape:export-ydpi="363.29498" />
+    <rect
+       style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.257559;stroke-linejoin:miter;stroke-dasharray:none"
+       id="rect12"
+       width="7.0355148"
+       height="7.0355148"
+       x="4.9489093"
+       y="4.9489093" />
+    <rect
+       style="fill:#ffffff;fill-opacity:0.80000001;stroke:none;stroke-width:0.365654;stroke-linejoin:miter;stroke-dasharray:none;filter:url(#filter13)"
+       id="rect13"
+       width="9.9882526"
+       height="9.9882526"
+       x="3.4725401"
+       y="3.4725401"
+       transform="matrix(0.70437894,0,0,0.70437894,2.5029251,2.5029251)" />
   </g>
 </svg>

@@ -9,7 +9,7 @@ pub fn plugin(app: &mut App) {
 pub struct Assets {
     pub player: Handle<Image>,
     pub enemy: Handle<Image>,
-    pub radius: Handle<Image>,
+    pub _circle: Handle<Image>,
 }
 
 impl FromWorld for Assets {
@@ -18,12 +18,12 @@ impl FromWorld for Assets {
 
         let player = server.load("images/player.png");
         let enemy = server.load("images/enemy.png");
-        let radius = server.load("images/radius.png");
+        let circle = server.load("images/radius.png");
 
         Self {
             player,
             enemy,
-            radius,
+            _circle: circle,
         }
     }
 }

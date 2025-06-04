@@ -4,6 +4,7 @@
 #![cfg_attr(not(feature = "dev"), windows_subsystem = "windows")]
 
 use crate::game::cursor::MainCamera;
+use bevy::render::camera;
 use bevy::{asset::AssetMetaCheck, prelude::*};
 
 mod asset_tracking;
@@ -85,5 +86,16 @@ struct Pause(pub bool);
 struct PausableSystems;
 
 fn spawn_camera(mut commands: Commands) {
-    commands.spawn((Name::new("Camera"), Camera2d, MainCamera));
+    let mut projection = OrthographicProjection::default_2d();
+    projection.scaling_mode = camera::ScalingMode::AutoMin {
+        min_height: 512.0,
+        min_width: 512.0,
+    };
+
+    commands.spawn((
+        Name::new("Camera"),
+        Camera2d,
+        MainCamera,
+        Projection::Orthographic(projection),
+    ));
 }

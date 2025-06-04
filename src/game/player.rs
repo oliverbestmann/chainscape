@@ -1,8 +1,10 @@
 use crate::game::cursor::{MainCamera, WorldCursor};
 use crate::game::movement::Movement;
+use crate::game::squishy::Squishy;
 use crate::{AppSystems, Pause, game};
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
+use std::time::Duration;
 use tracing::info;
 
 pub fn plugin(app: &mut App) {
@@ -19,7 +21,14 @@ pub fn player_bundle(assets: &game::Assets) -> impl Bundle {
     (
         Player,
         Movement {
-            velocity: Vec2::ZERO,
+            linear_velocity: Vec2::ZERO,
+            angular_velocity: 8.0,
+        },
+        Squishy {
+            frequency: 2.0,
+            scale_min: vec2(1.0, 0.9),
+            scale_max: vec2(1.0, 1.1),
+            offset: Duration::ZERO,
         },
         Sprite {
             image: assets.player.clone(),
@@ -56,7 +65,7 @@ pub fn handle_player_input(
         }
 
         // turn around and move!
-        player_movement.velocity = 100.0 * direction.normalize();
+        player_movement.linear_velocity = 120.0 * direction.normalize();
 
         unpause.set(Pause(false));
     }
