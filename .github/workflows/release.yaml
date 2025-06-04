@@ -21,16 +21,16 @@ concurrency:
 # Configure the release workflow by editing the following values.
 env:
   # The base filename of the binary produced by `cargo build`.
-  cargo_build_binary_name: bevy-jam2025
+  cargo_build_binary_name: chainscape
 
   # The path to the assets directory.
   assets_path: assets
 
   # Whether to build and package a release for a given target platform.
   build_for_web: true
-  build_for_linux: true
-  build_for_windows: true
-  build_for_macos: true
+  build_for_linux: false
+  build_for_windows: false
+  build_for_macos: false
 
   # Whether to upload the packages produced by this workflow to a GitHub release.
   upload_to_github: true
@@ -46,16 +46,16 @@ env:
   # The ID of the app produced by this workflow.
   # Applies to macOS releases.
   # Must contain only A-Z, a-z, 0-9, hyphen, and period: <https://developer.apple.com/documentation/bundleresources/information_property_list/cfbundleidentifier>.
-  app_id: hopfenherrscher.bevy-jam2025
+  app_id: hopfenherrscher.chainscape
 
   # The base filename of the binary in the package produced by this workflow.
   # Applies to Windows, macOS, and Linux releases.
   # Defaults to `cargo_build_binary_name` if commented out.
-  #app_binary_name: bevy-jam2025
+  #app_binary_name: chainscape
 
   # The name of the `.zip` or `.dmg` file produced by this workflow.
   # Defaults to `app_binary_name` if commented out.
-  #app_package_name: bevy-jam2025
+  #app_package_name: chainscape
 
   # The display name of the app produced by this workflow.
   # Applies to macOS releases.

@@ -1,5 +1,5 @@
 [package]
-name = "bevy-jam2025"
+name = "chainscape"
 authors = ["Oliver Bestmann <oliver.bestmann@googlemail.com>"]
 version = "0.1.0"
 edition = "2024"
