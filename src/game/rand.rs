@@ -3,7 +3,7 @@ use bevy::prelude::Resource;
 use rand::{Error, RngCore, SeedableRng};
 
 #[derive(Resource)]
-pub struct Rand(pub rand::rngs::StdRng);
+pub struct Rand(rand::rngs::StdRng);
 
 impl RngCore for Rand {
     fn next_u32(&mut self) -> u32 {

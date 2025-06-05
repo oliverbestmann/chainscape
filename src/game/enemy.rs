@@ -118,7 +118,7 @@ fn enemy_sync_image(
 
             (_, Some(awaking)) => {
                 let fraction = awaking.timer.fraction();
-                
+
                 COLOR_SLEEPING.mix(&COLOR_AWAKE, fraction.cubed())
             }
 

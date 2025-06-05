@@ -3,12 +3,12 @@ use bevy::prelude::*;
 pub mod assets;
 pub mod cursor;
 pub mod enemy;
+mod highscore;
 pub mod movement;
 pub mod player;
 pub mod rand;
 pub mod screens;
 pub mod squishy;
-mod highscore;
 
 use crate::game::rand::Rand;
 use crate::game::screens::Screen;

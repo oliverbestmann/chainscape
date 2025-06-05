@@ -1,21 +1,25 @@
 use crate::game;
-use crate::game::screens::Screen;
 use bevy::app::{App, Update};
 use bevy::prelude::*;
 use bevy::tasks::futures_lite::future;
-use bevy::tasks::{block_on, IoTaskPool, Task};
+use bevy::tasks::{IoTaskPool, Task, block_on};
 use bevy::ui::{Node, Val};
 use serde::Deserialize;
 use tracing::info;
 
 pub fn plugin(app: &mut App) {
     app.init_resource::<Highscore>();
+    app.init_state::<ShowHighscore>();
 
     app.add_systems(
         Update,
-        display_if_available.run_if(in_state(Screen::Gameplay)),
+        display_if_available.run_if(in_state(ShowHighscore(true))),
     );
 }
+
+#[derive(States, Debug, Default, Copy, Clone, Eq, PartialEq, Hash)]
+#[states(scoped_entities)]
+pub struct ShowHighscore(pub bool);
 
 #[derive(Debug, Deserialize)]
 pub struct HighscoreItem {
@@ -46,17 +50,21 @@ impl Highscore {
         None
     }
 
-    pub fn post(&mut self, player: &str, score: u32) {
+    pub fn post(&mut self, player: impl AsRef<str>, score: u32) {
         if let Some(task) = self.task.take() {
             // cancel the previous task
-            let _ = task.cancel();
+            _ = task.cancel();
         }
 
-        info!("Reporting highscore {} for player {:?}", score, player);
+        info!(
+            "Reporting highscore {} for player {:?}",
+            score,
+            player.as_ref()
+        );
 
         let url = url::Url::parse_with_params(
             "https://highscore.narf.zone/games/chainscape-1/highscore",
-            &[("player", player), ("score", &score.to_string())],
+            &[("player", player.as_ref()), ("score", &score.to_string())],
         );
 
         // create the request
@@ -108,43 +116,59 @@ fn display_if_available(
     }
 
     commands
-        .spawn((Node {
-            width: Val::Percent(80.0),
-            max_width: Val::Px(480.0),
-            height: Val::Percent(100.0),
-            flex_direction: FlexDirection::Column,
-            align_items: AlignItems::Center,
-            justify_content: JustifyContent::Center,
-            ..default()
-        },))
+        .spawn((
+            StateScoped(ShowHighscore(true)),
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                flex_direction: FlexDirection::Column,
+                ..default()
+            },
+            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.75)),
+        ))
         .with_children(|parent| {
-            parent.spawn((
-                // the title
-                Text::new("Highscore"),
-                Node {
-                    margin: UiRect::bottom(Val::Px(10.0)),
-                    ..Default::default()
-                },
-            ));
-
-            if let Ok(entries) = &highscore {
-                for entry in entries.iter().take(20) {
-                    parent.spawn(Node {
-                        width: Val::Percent(100.0),
-                        flex_direction: FlexDirection::Row,
-                        ..default()
-                    });
-
+            parent
+                .spawn((Node {
+                    width: Val::Percent(100.0),
+                    max_width: Val::Px(320.0),
+                    height: Val::Percent(100.0),
+                    flex_direction: FlexDirection::Column,
+                    justify_content: JustifyContent::Start,
+                    align_self: AlignSelf::Center,
+                    margin: UiRect::px(32.0, 32.0, 32.0, 0.0),
+                    ..default()
+                },))
+                .with_children(|parent| {
                     parent.spawn((
-                        Text::new(&entry.player),
+                        // the title
+                        Text::new("Highscore"),
                         Node {
-                            flex_grow: 1.0,
-                            ..default()
+                            margin: UiRect::bottom(Val::Px(16.0)),
+                            ..Default::default()
                         },
                     ));
 
-                    parent.spawn((Text::new(&entry.score.to_string()),));
-                }
-            }
+                    if let Ok(entries) = &highscore {
+                        for entry in entries.iter().take(20) {
+                            parent
+                                .spawn(Node {
+                                    width: Val::Percent(100.0),
+                                    flex_direction: FlexDirection::Row,
+                                    ..default()
+                                })
+                                .with_children(|parent| {
+                                    parent.spawn((
+                                        Text::new(&entry.player),
+                                        Node {
+                                            flex_grow: 1.0,
+                                            ..default()
+                                        },
+                                    ));
+
+                                    parent.spawn((Text::new(entry.score.to_string()),));
+                                });
+                        }
+                    }
+                });
         });
 }
