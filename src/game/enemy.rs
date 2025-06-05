@@ -3,8 +3,7 @@ use crate::game::player::Player;
 use crate::game::rand::Rand;
 use crate::game::screens::Screen;
 use crate::game::squishy::Squishy;
-use crate::{game, AppSystems};
-use avian2d::prelude::{Collider, LinearVelocity, RigidBody};
+use crate::{AppSystems, game};
 use bevy::math::FloatPow;
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
@@ -82,9 +81,6 @@ pub fn enemy_bundle(_rand: &mut Rand, assets: &game::Assets, enemy: Enemy) -> im
             anchor: Anchor::Center,
             ..default()
         },
-        RigidBody::Dynamic,
-        Collider::circle(10.0),
-        LinearVelocity::ZERO,
         // children![
         //     Name::new("Radius"),
         //     Sprite {

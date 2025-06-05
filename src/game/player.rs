@@ -1,7 +1,7 @@
 use crate::game::cursor::{MainCamera, WorldCursor};
 use crate::game::movement::Movement;
 use crate::game::squishy::Squishy;
-use crate::{game, AppSystems, Pause};
+use crate::{AppSystems, Pause, game};
 use avian2d::prelude::{Collider, LinearVelocity, RigidBody};
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
