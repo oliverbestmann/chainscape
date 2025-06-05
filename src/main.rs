@@ -44,6 +44,12 @@ impl Plugin for AppPlugin {
                 }),
         );
 
+        app.add_plugins((
+            avian2d::PhysicsPlugins::default(),
+            #[cfg(debug_assertions)]
+            avian2d::debug_render::PhysicsDebugPlugin::default(),
+        ));
+
         // Add other plugins.
         app.add_plugins((asset_tracking::plugin, screens::plugin, game::plugin));
 

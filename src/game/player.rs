@@ -1,7 +1,8 @@
 use crate::game::cursor::{MainCamera, WorldCursor};
 use crate::game::movement::Movement;
 use crate::game::squishy::Squishy;
-use crate::{AppSystems, Pause, game};
+use crate::{game, AppSystems, Pause};
+use avian2d::prelude::{Collider, LinearVelocity, RigidBody};
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
 use std::time::Duration;
@@ -26,7 +27,7 @@ pub fn player_bundle(assets: &game::Assets) -> impl Bundle {
     (
         Player,
         Movement {
-            linear_velocity: Vec2::ZERO,
+            target_velocity: Vec2::ZERO,
             angular_velocity: 8.0,
         },
         Squishy {
@@ -42,6 +43,9 @@ pub fn player_bundle(assets: &game::Assets) -> impl Bundle {
             anchor: Anchor::Center,
             ..default()
         },
+        RigidBody::Kinematic,
+        Collider::circle(16.0),
+        LinearVelocity::ZERO,
     )
 }
 
@@ -70,7 +74,7 @@ pub fn handle_player_input(
         }
 
         // turn around and move!
-        player_movement.linear_velocity = 130.0 * direction.normalize();
+        player_movement.target_velocity = 130.0 * direction.normalize();
 
         unpause.set(Pause(false));
     }
@@ -125,7 +129,7 @@ pub fn handle_player_input_touch(
         }
 
         // turn around and move!
-        player_movement.linear_velocity = 130.0 * direction.normalize();
+        player_movement.target_velocity = 130.0 * direction.normalize();
 
         unpause.set(Pause(false));
     }

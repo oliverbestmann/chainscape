@@ -3,7 +3,8 @@ use crate::game::player::Player;
 use crate::game::rand::Rand;
 use crate::game::screens::Screen;
 use crate::game::squishy::Squishy;
-use crate::{AppSystems, game};
+use crate::{game, AppSystems};
+use avian2d::prelude::{Collider, LinearVelocity, RigidBody};
 use bevy::math::FloatPow;
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
@@ -54,10 +55,10 @@ pub struct Awake {
 
 impl Awaking {
     pub fn new(rand: &mut impl Rng, delay_secs_range: Range<f32>) -> Self {
-        let sign = if rand.gen_bool(0.5) { 1.0 } else { -1.0 };
-        let angular_velocity = rand.gen_range(PI..PI * 2.0) * sign;
+        let sign = if rand.random_bool(0.5) { 1.0 } else { -1.0 };
+        let angular_velocity = rand.random_range(PI..PI * 2.0) * sign;
 
-        let delay_secs = rand.gen_range(delay_secs_range);
+        let delay_secs = rand.random_range(delay_secs_range);
 
         Self {
             timer: Timer::new(Duration::from_secs_f32(delay_secs), TimerMode::Once),
@@ -71,7 +72,7 @@ pub fn enemy_bundle(_rand: &mut Rand, assets: &game::Assets, enemy: Enemy) -> im
         enemy,
         Sleeping,
         Movement {
-            linear_velocity: Vec2::ZERO,
+            target_velocity: Vec2::ZERO,
             angular_velocity: 3.0,
         },
         Sprite {
@@ -81,6 +82,9 @@ pub fn enemy_bundle(_rand: &mut Rand, assets: &game::Assets, enemy: Enemy) -> im
             anchor: Anchor::Center,
             ..default()
         },
+        RigidBody::Dynamic,
+        Collider::circle(10.0),
+        LinearVelocity::ZERO,
         // children![
         //     Name::new("Radius"),
         //     Sprite {
@@ -92,7 +96,7 @@ pub fn enemy_bundle(_rand: &mut Rand, assets: &game::Assets, enemy: Enemy) -> im
         //     },
         //     // slightly below the actual enemy
         //     Transform::from_xyz(0.0, 0.0, -0.1)
-        //         .with_rotation(Quat::from_rotation_z(rand.gen_range(0.0..PI * 2.0))),
+        //         .with_rotation(Quat::from_rotation_z(rand.random_range(0.0..PI * 2.0))),
         // ],
     )
 }
@@ -139,12 +143,12 @@ pub fn generate_positions(
     clearance: f32,
     count: usize,
 ) -> Vec<Vec2> {
-    let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
+    let mut rng = rand::rngs::SmallRng::seed_from_u64(seed);
 
     let mut positions = Vec::with_capacity(count);
     while positions.len() < count {
-        let x = rng.gen_range(-max_radius..max_radius);
-        let y = rng.gen_range(-max_radius..max_radius);
+        let x = rng.random_range(-max_radius..max_radius);
+        let y = rng.random_range(-max_radius..max_radius);
 
         let offset = vec2(x, y);
 
@@ -240,11 +244,11 @@ fn awaking(
         commands.entity(entity).remove::<Awaking>().insert((
             Awake {
                 since: time.elapsed(),
-                seed: rand.gen_range(0.0..200.0),
+                seed: rand.random_range(0.0..200.0),
                 reorient: Timer::default(),
             },
             Squishy {
-                frequency: rand.gen_range(1.8..2.2),
+                frequency: rand.random_range(1.8..2.2),
                 scale_min: vec2(0.9, 1.0),
                 scale_max: vec2(1.09, 1.0),
                 offset: Duration::ZERO,
@@ -268,7 +272,7 @@ fn hunt_player_or_sleep(
 
         // re-init the timer to reorient later
         enemy_awake.reorient = Timer::new(
-            Duration::from_secs_f32(rand.gen_range(1.0..2.0)),
+            Duration::from_secs_f32(rand.random_range(1.0..2.0)),
             TimerMode::Once,
         );
 
@@ -286,7 +290,7 @@ fn hunt_player_or_sleep(
         // get vector to target
         let target = player.translation.xy() + random_vec2(rand.as_mut()) * 32.0;
         let offset = target - enemy_transform.translation.xy();
-        enemy_movement.linear_velocity = offset.normalize() * rand.gen_range(100.0..120.0);
+        enemy_movement.target_velocity = offset.normalize() * rand.random_range(100.0..120.0);
     }
 }
 
@@ -314,18 +318,18 @@ fn collision_avoidance(
             }
         }
 
-        let mut velocity = enemies[idx].0.linear_velocity;
+        let mut velocity = enemies[idx].0.target_velocity;
         velocity += close * time.elapsed_secs();
 
         // clamp velocity
-        enemies[idx].0.linear_velocity = velocity.clamp_length(100.0, 130.0);
+        enemies[idx].0.target_velocity = velocity.clamp_length(100.0, 130.0);
     }
 }
 
 fn random_vec2(rng: &mut impl Rng) -> Vec2 {
     loop {
-        let x = rng.gen_range(-1.0..1.0);
-        let y = rng.gen_range(-1.0..1.0);
+        let x = rng.random_range(-1.0..1.0);
+        let y = rng.random_range(-1.0..1.0);
         let vec = vec2(x, y);
         if vec.length_squared() > 1.0 {
             continue;

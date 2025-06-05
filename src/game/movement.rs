@@ -1,6 +1,7 @@
 use crate::{AppSystems, PausableSystems};
+use avian2d::prelude::LinearVelocity;
 use bevy::app::{App, Update};
-use bevy::math::{Quat, Vec2, vec3};
+use bevy::math::{vec3, Quat, Vec2, Vec3Swizzles};
 use bevy::prelude::{Component, IntoScheduleConfigs, Query, Res, Transform};
 use bevy::time::{Time, Virtual};
 
@@ -15,19 +16,18 @@ pub fn plugin(app: &mut App) {
 
 #[derive(Component)]
 pub struct Movement {
-    pub linear_velocity: Vec2,
+    pub target_velocity: Vec2,
     pub angular_velocity: f32,
 }
 
-fn apply_movement(timer: Res<Time<Virtual>>, mut entities: Query<(&mut Transform, &Movement)>) {
+fn apply_movement(
+    timer: Res<Time<Virtual>>,
+    mut entities: Query<(&mut Transform, &Movement, &mut LinearVelocity)>,
+) {
     let dt = timer.delta_secs();
 
-    for (mut transform, mov) in &mut entities {
-        if mov.linear_velocity.length_squared() < 0.01 {
-            continue;
-        }
-
-        let target_angle = mov.linear_velocity.to_angle();
+    for (mut transform, mov, mut velocity) in &mut entities {
+        let target_angle = mov.target_velocity.to_angle();
         let target_quat = Quat::from_rotation_z(target_angle);
 
         // rotate towards the target
@@ -35,8 +35,8 @@ fn apply_movement(timer: Res<Time<Virtual>>, mut entities: Query<(&mut Transform
             .rotation
             .rotate_towards(target_quat, mov.angular_velocity * dt);
 
-        // get the direction we're looking at right now and move into that direction
-        let velocity = transform.rotation * vec3(1.0, 0.0, 0.0) * mov.linear_velocity.length();
-        transform.translation += velocity * dt;
+        // update velocity
+        let current_velocity = transform.rotation * vec3(1.0, 0.0, 0.0);
+        velocity.0 = current_velocity.xy().normalize() * mov.target_velocity.length();
     }
 }
