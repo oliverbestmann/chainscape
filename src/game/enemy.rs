@@ -3,7 +3,7 @@ use crate::game::player::Player;
 use crate::game::rand::Rand;
 use crate::game::screens::Screen;
 use crate::game::squishy::Squishy;
-use crate::{game, AppSystems};
+use crate::{AppSystems, game};
 use bevy::math::FloatPow;
 use bevy::prelude::*;
 use bevy::sprite::Anchor;

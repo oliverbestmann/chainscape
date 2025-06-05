@@ -10,7 +10,12 @@ use tracing::info;
 pub fn plugin(app: &mut App) {
     app.add_systems(
         Update,
-        (handle_player_input, camera_follow).in_set(AppSystems::Update),
+        (
+            handle_player_input,
+            handle_player_input_touch,
+            camera_follow,
+        )
+            .in_set(AppSystems::Update),
     );
 }
 
@@ -65,7 +70,62 @@ pub fn handle_player_input(
         }
 
         // turn around and move!
-        player_movement.linear_velocity = 120.0 * direction.normalize();
+        player_movement.linear_velocity = 130.0 * direction.normalize();
+
+        unpause.set(Pause(false));
+    }
+}
+
+pub fn handle_player_input_touch(
+    touches: Res<Touches>,
+    mut unpause: ResMut<NextState<Pause>>,
+    mut query_player: Query<(&Transform, &mut Movement), With<Player>>,
+
+    q_camera: Query<(&Camera, &GlobalTransform), With<MainCamera>>,
+) {
+    let Ok((player_transform, mut player_movement)) = query_player.single_mut() else {
+        return;
+    };
+
+    if touches.any_just_pressed() {
+        let Some(pos) = touches.first_pressed_position() else {
+            return;
+        };
+
+        // get the camera info and transform
+        // assuming there is exactly one main camera entity, so Query::single() is OK
+        let Ok((camera, camera_transform)) = q_camera.single() else {
+            return;
+        };
+
+        // check if the cursor is inside the window and get its position
+        // then, ask bevy to convert into world coordinates, and truncate to discard Z
+        let Some(world_position) = camera
+            .viewport_to_world(camera_transform, pos)
+            .ok()
+            .map(|ray| ray.origin.truncate())
+        else {
+            return;
+        };
+
+        info!(
+            "Touch input at {:?}, world position {:?}",
+            pos, world_position
+        );
+
+        let player_pos = player_transform.translation.xy();
+        let target_pos = world_position;
+
+        // direction the player wants to move to
+        let direction = target_pos - player_pos;
+
+        // clicked on the player itself
+        if direction.length_squared() < 0.01 {
+            return;
+        }
+
+        // turn around and move!
+        player_movement.linear_velocity = 130.0 * direction.normalize();
 
         unpause.set(Pause(false));
     }
