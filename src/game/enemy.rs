@@ -118,8 +118,8 @@ fn enemy_sync_image(
 
             (_, Some(awaking)) => {
                 let fraction = awaking.timer.fraction();
-                let mixed = COLOR_SLEEPING.mix(&COLOR_AWAKE, fraction.cubed());
-                mixed
+                
+                COLOR_SLEEPING.mix(&COLOR_AWAKE, fraction.cubed())
             }
 
             _ => COLOR_SLEEPING,
@@ -180,7 +180,7 @@ fn observe_surrounding(
         Runner(&'a Transform),
     }
 
-    impl<'a> Other<'a> {
+    impl Other<'_> {
         fn position(&self) -> Vec2 {
             match self {
                 Other::Player(tr) => tr.translation.xy(),
@@ -302,12 +302,12 @@ fn collision_avoidance(
         let mut close = Vec2::ZERO;
 
         // get distance ot all close boids
-        for other_idx in 0..enemies.len() {
+        for (other_idx, (_, other)) in enemies.iter().enumerate() {
             if other_idx == idx {
                 continue;
             }
 
-            let other_position = enemies[other_idx].1.translation.xy();
+            let other_position = other.translation.xy();
 
             if position.distance(other_position) < 30.0 {
                 close += (position - other_position).normalize();
