@@ -8,6 +8,7 @@ pub mod player;
 pub mod rand;
 pub mod screens;
 pub mod squishy;
+mod highscore;
 
 use crate::game::rand::Rand;
 use crate::game::screens::Screen;
@@ -23,6 +24,7 @@ pub fn plugin(app: &mut App) {
         squishy::plugin,
         player::plugin,
         enemy::plugin,
+        highscore::plugin,
     ));
 
     app.add_systems(OnEnter(Screen::Gameplay), spawn_game);

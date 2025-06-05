@@ -11,4 +11,5 @@ pub enum Screen {
     #[default]
     Loading,
     Gameplay,
+    Highscore,
 }
