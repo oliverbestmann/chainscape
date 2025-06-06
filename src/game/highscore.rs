@@ -50,7 +50,7 @@ impl Highscore {
         None
     }
 
-    pub fn post(&mut self, player: impl AsRef<str>, score: u32) {
+    pub fn _post(&mut self, player: impl AsRef<str>, score: u32) {
         if let Some(task) = self.task.take() {
             // cancel the previous task
             _ = task.cancel();
