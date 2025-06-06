@@ -1,3 +1,4 @@
+use avian2d::prelude::Gravity;
 use bevy::prelude::*;
 
 pub mod assets;
@@ -28,6 +29,8 @@ pub fn plugin(app: &mut App) {
     ));
 
     app.add_systems(OnEnter(Screen::Gameplay), spawn_game);
+
+    app.insert_resource(Gravity::ZERO);
 }
 
 pub fn spawn_game(mut commands: Commands, mut rand: ResMut<Rand>, assets: Res<Assets>) {

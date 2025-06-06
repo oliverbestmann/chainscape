@@ -5,7 +5,6 @@
 
 use crate::game::cursor::MainCamera;
 use bevy::render::camera;
-use bevy::window::WindowResolution;
 use bevy::{asset::AssetMetaCheck, prelude::*};
 
 mod asset_tracking;
@@ -20,7 +19,6 @@ pub struct AppPlugin;
 
 impl Plugin for AppPlugin {
     fn build(&self, app: &mut App) {
-        // Add Bevy plugins.
         app.add_plugins(
             DefaultPlugins
                 .set(AssetPlugin {
@@ -34,9 +32,6 @@ impl Plugin for AppPlugin {
                     primary_window: Window {
                         title: "Chainscape".to_string(),
                         fit_canvas_to_parent: true,
-                        prevent_default_event_handling: true,
-                        resolution: WindowResolution::new(500.0, 800.0 / 480.0 * 500.0)
-                            .with_scale_factor_override(1.0),
                         ..default()
                     }
                     .into(),

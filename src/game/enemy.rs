@@ -1,9 +1,9 @@
-use crate::game::movement::Movement;
 use crate::game::player::Player;
 use crate::game::rand::Rand;
 use crate::game::screens::Screen;
 use crate::game::squishy::Squishy;
 use crate::{AppSystems, game};
+use avian2d::prelude::{Collider, ColliderDisabled, ExternalForce, LinearVelocity, RigidBody};
 use bevy::math::FloatPow;
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
@@ -21,8 +21,9 @@ pub fn plugin(app: &mut App) {
             observe_surrounding,
             enemy_sync_image,
             awaking,
-            hunt_player_or_sleep,
+            hunt_player,
             collision_avoidance,
+            restrict_number_of_enemies_awake,
         )
             .run_if(in_state(Screen::Gameplay))
             .in_set(AppSystems::Update),
@@ -70,10 +71,6 @@ pub fn enemy_bundle(_rand: &mut Rand, assets: &game::Assets, enemy: Enemy) -> im
     (
         enemy,
         Sleeping,
-        Movement {
-            target_velocity: Vec2::ZERO,
-            angular_velocity: 3.0,
-        },
         Sprite {
             image: assets.enemy.clone(),
             custom_size: Some(Vec2::splat(48.0)),
@@ -81,19 +78,11 @@ pub fn enemy_bundle(_rand: &mut Rand, assets: &game::Assets, enemy: Enemy) -> im
             anchor: Anchor::Center,
             ..default()
         },
-        // children![
-        //     Name::new("Radius"),
-        //     Sprite {
-        //         image: assets.circle.clone(),
-        //         custom_size: Some(Vec2::splat(radius) * 2.0),
-        //         color: Color::srgba(1.0, 1.0, 1.0, 0.01),
-        //         anchor: Anchor::Center,
-        //         ..default()
-        //     },
-        //     // slightly below the actual enemy
-        //     Transform::from_xyz(0.0, 0.0, -0.1)
-        //         .with_rotation(Quat::from_rotation_z(rand.random_range(0.0..PI * 2.0))),
-        // ],
+        RigidBody::Dynamic,
+        Collider::rectangle(20.0, 20.0),
+        LinearVelocity::ZERO,
+        ExternalForce::ZERO.with_persistence(false),
+        ColliderDisabled,
     )
 }
 
@@ -237,26 +226,29 @@ fn awaking(
             continue;
         }
 
-        commands.entity(entity).remove::<Awaking>().insert((
-            Awake {
-                since: time.elapsed(),
-                seed: rand.random_range(0.0..200.0),
-                reorient: Timer::default(),
-            },
-            Squishy {
-                frequency: rand.random_range(1.8..2.2),
-                scale_min: vec2(0.9, 1.0),
-                scale_max: vec2(1.09, 1.0),
-                offset: Duration::ZERO,
-            },
-        ));
+        commands
+            .entity(entity)
+            .remove::<(Awaking, ColliderDisabled)>()
+            .insert((
+                Awake {
+                    since: time.elapsed(),
+                    seed: rand.random_range(0.0..200.0),
+                    reorient: Timer::default(),
+                },
+                Squishy {
+                    frequency: rand.random_range(1.8..2.2),
+                    scale_min: vec2(0.9, 1.0),
+                    scale_max: vec2(1.09, 1.0),
+                    offset: Duration::ZERO,
+                },
+            ));
     }
 }
 
-fn hunt_player_or_sleep(
+fn hunt_player(
     mut rand: ResMut<Rand>,
     time: Res<Time<Virtual>>,
-    mut enemies: Query<(&Transform, &mut Awake, &mut Movement), With<Enemy>>,
+    mut enemies: Query<(&Transform, &mut Awake, &mut LinearVelocity), With<Enemy>>,
     players: Query<&Transform, With<Player>>,
 ) {
     let players: Vec<_> = players.iter().collect();
@@ -286,22 +278,47 @@ fn hunt_player_or_sleep(
         // get vector to target
         let target = player.translation.xy() + random_vec2(rand.as_mut()) * 32.0;
         let offset = target - enemy_transform.translation.xy();
-        enemy_movement.target_velocity = offset.normalize() * rand.random_range(100.0..120.0);
+        enemy_movement.0 = offset.normalize() * rand.random_range(100.0..120.0);
     }
 }
 
-fn collision_avoidance(
-    time: Res<Time<Virtual>>,
-    mut enemies: Query<(&mut Movement, &Transform), With<Awake>>,
+fn restrict_number_of_enemies_awake(
+    mut commands: Commands,
+    mut enemies: Query<(Entity, &Transform, &mut LinearVelocity), (With<Enemy>, With<Awake>)>,
+    player: Single<&Transform, With<Player>>,
 ) {
+    // disable enemies that are furthest away from the player, but only if we have more
+    // than 128 active enemies
+    let mut enemies: Vec<_> = enemies.iter_mut().collect::<Vec<_>>();
+    if enemies.len() < 128 {
+        return;
+    }
+
+    // sort enemies ascending by
+    enemies
+        .sort_by_cached_key(|(_, tr, _)| OrderedFloat(tr.translation.distance(player.translation)));
+
+    for (id, _, mov) in enemies.iter_mut().skip(128) {
+        mov.0 = Vec2::ZERO;
+
+        // revert into sleeping state
+        commands
+            .entity(*id)
+            .remove::<(Awake, Squishy)>()
+            .insert((Sleeping, ColliderDisabled));
+    }
+}
+
+fn collision_avoidance(mut enemies: Query<(&mut ExternalForce, &Transform), With<Awake>>) {
     let mut enemies: Vec<_> = enemies.iter_mut().collect();
 
     for idx in 0..enemies.len() {
-        let position = enemies[idx].1.translation.xy();
+        let (_, transform) = enemies[idx];
+        let position = transform.translation.xy();
 
-        let mut close = Vec2::ZERO;
+        let mut new_force = Vec2::ZERO;
 
-        // get distance ot all close boids
+        // calculate force
         for (other_idx, (_, other)) in enemies.iter().enumerate() {
             if other_idx == idx {
                 continue;
@@ -309,16 +326,15 @@ fn collision_avoidance(
 
             let other_position = other.translation.xy();
 
-            if position.distance(other_position) < 30.0 {
-                close += (position - other_position).normalize();
+            let distance = position.distance(other_position);
+            if position.distance(other_position) < 64.0 {
+                let direction = (position - other_position).normalize();
+                new_force += direction * (1000000.0 / distance).min(1000000.0);
             }
         }
 
-        let mut velocity = enemies[idx].0.target_velocity;
-        velocity += close * time.elapsed_secs();
-
-        // clamp velocity
-        enemies[idx].0.target_velocity = velocity.clamp_length(100.0, 130.0);
+        let (force, _) = &mut enemies[idx];
+        force.apply_force(new_force);
     }
 }
 

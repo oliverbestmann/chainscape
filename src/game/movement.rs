@@ -39,8 +39,10 @@ fn apply_movement(
         let current_velocity = direction.xy() * mov.target_velocity.length();
 
         if let Some(mut velocity) = velocity {
-            // update linear velocity and let the physics engine handle the rest
-            velocity.0 = current_velocity
+            if velocity.0 != current_velocity {
+                // update linear velocity and let the physics engine handle the rest
+                velocity.0 = current_velocity
+            }
         } else {
             // apply velocity directly
             transform.translation += current_velocity.extend(0.0) * dt;

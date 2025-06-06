@@ -40,7 +40,9 @@ ehttp = { version = "0.5.0", features = ["native-async"] }
 url = "2.5.4"
 serde_json = "1.0.140"
 serde = { version = "1.0.219", features = ["derive"] }
-avian2d = { git = "https://github.com/Jondolf/avian.git", rev = "e6c0d4dad1f6b8a50d65c7e3d15ec5a4282d5045" }
+# avian2d = { git = "https://github.com/Jondolf/avian.git", rev = "e6c0d4dad1f6b8a50d65c7e3d15ec5a4282d5045" }
+avian2d = { version = "0.3.1" }
+web-sys = { version = "0.3.77", features = ["Window"] }
 
 # Your web builds will start failing if you add a dependency that pulls in `getrandom` v0.3+.
 # To fix this, you should tell `getrandom` to use the `wasm_js` backend on Wasm.
