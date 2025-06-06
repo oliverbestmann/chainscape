@@ -1,16 +1,19 @@
+use ::rand::seq::IndexedRandom;
 use avian2d::prelude::Gravity;
 use bevy::prelude::*;
 
 pub mod assets;
 pub mod cursor;
 pub mod enemy;
-mod highscore;
+pub mod highscore;
 pub mod movement;
 pub mod player;
+pub mod powerup;
 pub mod rand;
 pub mod screens;
 pub mod squishy;
 
+use crate::game::powerup::{Powerup, powerup_bundle};
 use crate::game::rand::Rand;
 use crate::game::screens::Screen;
 pub use assets::Assets;
@@ -26,6 +29,7 @@ pub fn plugin(app: &mut App) {
         player::plugin,
         enemy::plugin,
         highscore::plugin,
+        powerup::plugin,
     ));
 
     app.add_systems(OnEnter(Screen::Gameplay), spawn_game);
@@ -49,6 +53,21 @@ pub fn spawn_game(mut commands: Commands, mut rand: ResMut<Rand>, assets: Res<As
             Name::new("Enemy"),
             StateScoped(Screen::Gameplay),
             enemy::enemy_bundle(rand.as_mut(), &assets, enemy),
+            Transform::from_translation(pos.extend(1.0)),
+        ));
+    }
+
+    // place some random powerups
+    for _ in 0..64 {
+        let powerup = [Powerup::Speed, Powerup::Explosion]
+            .choose(&mut *rand)
+            .unwrap();
+        let pos = rand.vec2() * 4096.0;
+
+        commands.spawn((
+            Name::new("Powerup"),
+            StateScoped(Screen::Gameplay),
+            powerup_bundle(&assets, *powerup),
             Transform::from_translation(pos.extend(1.0)),
         ));
     }

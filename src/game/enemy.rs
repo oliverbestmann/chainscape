@@ -276,7 +276,7 @@ fn hunt_player(
         };
 
         // get vector to target
-        let target = player.translation.xy() + random_vec2(rand.as_mut()) * 32.0;
+        let target = player.translation.xy() + rand.vec2() * 32.0;
         let offset = target - enemy_transform.translation.xy();
         enemy_movement.0 = offset.normalize() * rand.random_range(100.0..120.0);
     }
@@ -335,18 +335,5 @@ fn collision_avoidance(mut enemies: Query<(&mut ExternalForce, &Transform), With
 
         let (force, _) = &mut enemies[idx];
         force.apply_force(new_force);
-    }
-}
-
-fn random_vec2(rng: &mut impl Rng) -> Vec2 {
-    loop {
-        let x = rng.random_range(-1.0..1.0);
-        let y = rng.random_range(-1.0..1.0);
-        let vec = vec2(x, y);
-        if vec.length_squared() > 1.0 {
-            continue;
-        }
-
-        break vec;
     }
 }

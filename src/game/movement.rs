@@ -2,7 +2,7 @@ use crate::{AppSystems, PausableSystems};
 use avian2d::prelude::LinearVelocity;
 use bevy::app::{App, Update};
 use bevy::math::{Quat, Vec2, Vec3Swizzles, vec3};
-use bevy::prelude::{Component, IntoScheduleConfigs, Query, Res, Transform};
+use bevy::prelude::{Component, DetectChangesMut, IntoScheduleConfigs, Query, Res, Transform};
 use bevy::time::{Time, Virtual};
 
 pub fn plugin(app: &mut App) {
@@ -22,11 +22,11 @@ pub struct Movement {
 
 fn apply_movement(
     time: Res<Time<Virtual>>,
-    mut entities: Query<(&mut Transform, &Movement, Option<&mut LinearVelocity>)>,
+    mut entities: Query<(&mut Transform, &Movement, &mut LinearVelocity)>,
 ) {
     let dt = time.delta_secs();
 
-    for (mut transform, mov, velocity) in &mut entities {
+    for (mut transform, mov, mut velocity) in &mut entities {
         let target_angle = mov.target_velocity.to_angle();
         let target_quat = Quat::from_rotation_z(target_angle);
 
@@ -38,14 +38,6 @@ fn apply_movement(
         let direction = transform.rotation * vec3(1.0, 0.0, 0.0);
         let current_velocity = direction.xy() * mov.target_velocity.length();
 
-        if let Some(mut velocity) = velocity {
-            if velocity.0 != current_velocity {
-                // update linear velocity and let the physics engine handle the rest
-                velocity.0 = current_velocity
-            }
-        } else {
-            // apply velocity directly
-            transform.translation += current_velocity.extend(0.0) * dt;
-        }
+        velocity.set_if_neq(LinearVelocity(current_velocity));
     }
 }

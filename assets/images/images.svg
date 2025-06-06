@@ -27,11 +27,11 @@
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="px"
      inkscape:export-bgcolor="#00000000"
-     inkscape:zoom="4.7370599"
-     inkscape:cx="48.13112"
-     inkscape:cy="89.612546"
-     inkscape:window-width="2080"
-     inkscape:window-height="1608"
+     inkscape:zoom="7.3725356"
+     inkscape:cx="153.27156"
+     inkscape:cy="74.465561"
+     inkscape:window-width="2273"
+     inkscape:window-height="1535"
      inkscape:window-x="26"
      inkscape:window-y="23"
      inkscape:window-maximized="0"
@@ -67,6 +67,28 @@
        margin="0"
        bleed="0"
        inkscape:export-filename="radius.png"
+       inkscape:export-xdpi="192"
+       inkscape:export-ydpi="192" />
+    <inkscape:page
+       x="19.604723"
+       y="0"
+       width="16.933332"
+       height="16.933332"
+       id="page1"
+       margin="0"
+       bleed="0"
+       inkscape:export-filename="speed.png"
+       inkscape:export-xdpi="192"
+       inkscape:export-ydpi="192" />
+    <inkscape:page
+       x="41.916832"
+       y="0"
+       width="16.933332"
+       height="16.933332"
+       id="page2"
+       margin="0"
+       bleed="0"
+       inkscape:export-filename="explosion.png"
        inkscape:export-xdpi="192"
        inkscape:export-ydpi="192" />
   </sodipodi:namedview>
@@ -121,6 +143,32 @@
          result="blur"
          in="fbSourceGraphic" />
     </filter>
+    <filter
+       style="color-interpolation-filters:sRGB;"
+       inkscape:label="Blur"
+       id="filter5"
+       x="-0.72478194"
+       y="-0.35595817"
+       width="2.4495639"
+       height="1.7119163">
+      <feGaussianBlur
+         stdDeviation="1.4 1.4"
+         result="blur"
+         id="feGaussianBlur5" />
+    </filter>
+    <filter
+       style="color-interpolation-filters:sRGB;"
+       inkscape:label="Blur"
+       id="filter7"
+       x="-0.35644863"
+       y="-0.35251765"
+       width="1.7128973"
+       height="1.7050353">
+      <feGaussianBlur
+         stdDeviation="1.4 1.4"
+         result="blur"
+         id="feGaussianBlur7" />
+    </filter>
   </defs>
   <g
      inkscape:label="Layer 1"
@@ -165,5 +213,30 @@
        x="3.4725401"
        y="3.4725401"
        transform="matrix(0.70437894,0,0,0.70437894,2.5029251,2.5029251)" />
+    <path
+       style="fill:#ffffff;fill-opacity:1;stroke-width:0.365654"
+       d="m 27.149799,3.7470107 -1.396348,5.6739706 1.731473,-0.5026853 -1.061226,4.268026 3.853921,-5.8088071 -2.625136,0.1675617 2.736845,-3.742212 z"
+       id="path3"
+       sodipodi:nodetypes="cccccccc" />
+    <path
+       style="fill:#ffffff;fill-opacity:1;stroke-width:0.365654;filter:url(#filter5)"
+       d="m 27.149799,3.7470107 -1.396348,5.6739706 1.731473,-0.5026853 -1.061226,4.268026 3.853921,-5.8088071 -2.625136,0.1675617 2.736845,-3.742212 z"
+       id="path4"
+       sodipodi:nodetypes="cccccccc" />
+    <path
+       style="fill:#ffffff;stroke-width:0.298271"
+       d="m 47.016954,3.7009475 3.630013,2.3885093 1.990651,-2.3885093 -0.161009,3.149641 1.771417,0.4662414 -1.259116,1.3487649 2.10775,2.7351832 -4.039853,-0.980411 -2.576138,2.812018 -0.175645,-3.278721 -2.634687,-1.6393606 2.517588,-0.7634405 z"
+       id="path5"
+       sodipodi:nodetypes="ccccccccccccc" />
+    <path
+       style="fill:#e6e6e6;stroke-width:0.20842"
+       d="m 46.68122,6.7589295 3.031167,0.1771375 0.370133,-2.1408791 1.002984,1.9622332 1.234854,-0.3367535 -0.290715,1.2561032 2.231105,0.9187703 -2.78722,0.8181519 -0.57647,2.601718 -1.251806,-1.922725 -2.167118,-0.07154 1.256769,-1.3415826 z"
+       id="path6"
+       sodipodi:nodetypes="ccccccccccccc" />
+    <path
+       style="fill:#ffffff;stroke-width:0.298271;filter:url(#filter7)"
+       d="m 47.016954,3.7009475 3.630013,2.3885093 1.990651,-2.3885093 -0.161009,3.149641 1.771417,0.4662414 -1.259116,1.3487649 2.10775,2.7351832 -4.039853,-0.980411 -2.576138,2.812018 -0.175645,-3.278721 -2.634687,-1.6393606 2.517588,-0.7634405 z"
+       id="path7"
+       sodipodi:nodetypes="ccccccccccccc" />
   </g>
 </svg>
