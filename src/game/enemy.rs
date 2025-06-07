@@ -3,14 +3,15 @@ use crate::game::rand::Rand;
 use crate::game::screens::Screen;
 use crate::game::squishy::Squishy;
 use crate::{AppSystems, game};
-use avian2d::prelude::{Collider, ColliderDisabled, ExternalForce, LinearVelocity, RigidBody};
+use avian2d::prelude::{
+    Collider, ColliderDisabled, ExternalForce, LinearVelocity, MaxLinearSpeed, RigidBody,
+};
 use bevy::math::FloatPow;
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
-use fastnoise_lite::FastNoiseLite;
+use fastnoise_lite::{FastNoiseLite, NoiseType};
 use ordered_float::OrderedFloat;
-use rand::{Rng, SeedableRng};
-use std::f32::consts::PI;
+use rand::Rng;
 use std::ops::Range;
 use std::time::Duration;
 
@@ -31,19 +32,17 @@ pub fn plugin(app: &mut App) {
 }
 
 #[derive(Component)]
-pub struct Enemy {
-    // the base radius that this enemy observes
-    pub observe_radius: f32,
-}
+pub struct Enemy;
 
 #[derive(Component)]
-pub struct Sleeping;
+pub struct Sleeping {
+    pub when: Duration,
+}
 
 #[derive(Component)]
 pub struct Awaking {
     // awake once the timer hits zero
     pub timer: Timer,
-    pub angular_velocity: f32,
 }
 
 #[derive(Component)]
@@ -55,22 +54,20 @@ pub struct Awake {
 
 impl Awaking {
     pub fn new(rand: &mut impl Rng, delay_secs_range: Range<f32>) -> Self {
-        let sign = if rand.random_bool(0.5) { 1.0 } else { -1.0 };
-        let angular_velocity = rand.random_range(PI..PI * 2.0) * sign;
-
         let delay_secs = rand.random_range(delay_secs_range);
 
         Self {
             timer: Timer::new(Duration::from_secs_f32(delay_secs), TimerMode::Once),
-            angular_velocity,
         }
     }
 }
 
-pub fn enemy_bundle(_rand: &mut Rand, assets: &game::Assets, enemy: Enemy) -> impl Bundle {
+pub fn enemy_bundle(rand: &mut Rand, assets: &game::Assets) -> impl Bundle {
     (
-        enemy,
-        Sleeping,
+        Enemy,
+        Sleeping {
+            when: Duration::ZERO,
+        },
         Sprite {
             image: assets.enemy.clone(),
             custom_size: Some(Vec2::splat(48.0)),
@@ -81,13 +78,14 @@ pub fn enemy_bundle(_rand: &mut Rand, assets: &game::Assets, enemy: Enemy) -> im
         RigidBody::Dynamic,
         Collider::rectangle(20.0, 20.0),
         LinearVelocity::ZERO,
+        MaxLinearSpeed(rand.random_range(100.0..120.0)),
         ExternalForce::ZERO.with_persistence(false),
         ColliderDisabled,
     )
 }
 
-const COLOR_AWAKE: Color = Color::srgba(1.0, 0.1, 0.1, 1.0);
-const COLOR_SLEEPING: Color = Color::srgba(1.0, 1.0, 1.0, 0.75);
+const COLOR_SLEEPING: Color = Color::oklcha(0.668, 0.0, 36.99, 1.00);
+const COLOR_AWAKE: Color = Color::oklcha(0.668, 0.224, 36.99, 0.75);
 
 fn enemy_sync_image(
     time: Res<Time<Virtual>>,
@@ -121,21 +119,33 @@ fn enemy_sync_image(
 }
 
 pub fn generate_positions(
-    seed: u64,
+    rand: &mut Rand,
     center: Vec2,
     min_radius: f32,
     max_radius: f32,
     clearance: f32,
     count: usize,
 ) -> Vec<Vec2> {
-    let mut rng = rand::rngs::SmallRng::seed_from_u64(seed);
+    let mut noise = FastNoiseLite::with_seed(1);
+    noise.noise_type = NoiseType::Cellular;
+    noise.frequency = 0.001;
+
+    let mut random_point = || {
+        loop {
+            let random: f32 = rand.random();
+
+            let candidate = rand.vec2() * max_radius;
+            let noise_value = (noise.get_noise_2d(candidate.x, candidate.y) + 1.0).min(1.0);
+
+            if random <= noise_value.squared() {
+                return candidate;
+            }
+        }
+    };
 
     let mut positions = Vec::with_capacity(count);
     while positions.len() < count {
-        let x = rng.random_range(-max_radius..max_radius);
-        let y = rng.random_range(-max_radius..max_radius);
-
-        let offset = vec2(x, y);
+        let offset = random_point();
 
         if !(min_radius..max_radius).contains(&offset.length()) {
             // out of the circle or to near to the center
@@ -160,20 +170,21 @@ pub fn generate_positions(
 fn observe_surrounding(
     mut rand: ResMut<Rand>,
     mut commands: Commands,
-    mut enemies: Query<(Entity, &Enemy, &Transform), With<Sleeping>>,
+    mut enemies: Query<(Entity, &Transform, &Sleeping), With<Sleeping>>,
+    time: Res<Time<Virtual>>,
     query_players: Query<&Transform, With<Player>>,
     query_runners: Query<&Transform, (With<Enemy>, With<Awake>)>,
 ) {
     enum Other<'a> {
         Player(&'a Transform),
-        Runner(&'a Transform),
+        Enemy(&'a Transform),
     }
 
     impl Other<'_> {
         fn position(&self) -> Vec2 {
             match self {
                 Other::Player(tr) => tr.translation.xy(),
-                Other::Runner(tr) => tr.translation.xy(),
+                Other::Enemy(tr) => tr.translation.xy(),
             }
         }
     }
@@ -181,10 +192,15 @@ fn observe_surrounding(
     let others: Vec<_> = query_players
         .iter()
         .map(Other::Player)
-        .chain(query_runners.iter().map(Other::Runner))
+        .chain(query_runners.iter().map(Other::Enemy))
         .collect();
 
-    for (enemy_id, enemy, enemy_transform) in &mut enemies {
+    for (enemy_id, enemy_transform, enemy_sleeping) in &mut enemies {
+        if time.elapsed() - enemy_sleeping.when <= Duration::from_secs(2) {
+            // do not wake up again within one second
+            continue;
+        }
+
         // get the nearest entity to this one
         let Some(other) = others.iter().min_by_key(|other| {
             OrderedFloat(other.position().distance(enemy_transform.translation.xy()))
@@ -196,8 +212,8 @@ fn observe_surrounding(
         let offset = other.position() - enemy_transform.translation.xy();
 
         let (max_distance, delay_secs_range) = match other {
-            Other::Player(_player) => (enemy.observe_radius, 2.0..3.0),
-            Other::Runner(_runner) => (32.0, 0.5..1.0),
+            Other::Player(_player) => (64.0, 2.0..3.0),
+            Other::Enemy(_runner) => (128.0, 0.5..1.0),
         };
 
         if offset.length() > max_distance {
@@ -206,10 +222,15 @@ fn observe_surrounding(
         }
 
         // wake the guy up and go into the direction of the player
-        commands
-            .entity(enemy_id)
-            .remove::<Sleeping>()
-            .insert(Awaking::new(rand.as_mut(), delay_secs_range));
+        commands.entity(enemy_id).remove::<Sleeping>().insert((
+            Awaking::new(rand.as_mut(), delay_secs_range),
+            Squishy {
+                frequency: 1.0,
+                scale_max: Vec2::splat(1.1),
+                scale_min: Vec2::splat(1.0),
+                offset: time.elapsed(),
+            },
+        ));
     }
 }
 
@@ -220,15 +241,17 @@ fn awaking(
     mut enemies: Query<(Entity, &mut Transform, &mut Awaking)>,
 ) {
     for (entity, mut transform, mut awaking) in &mut enemies {
-        transform.rotation *= Quat::from_rotation_z(awaking.angular_velocity * time.delta_secs());
+        // transform.rotation *= Quat::from_rotation_z(awaking.angular_velocity * time.delta_secs());
 
         if !awaking.timer.tick(time.delta()).just_finished() {
             continue;
         }
 
+        transform.scale = Vec3::splat(1.0);
+
         commands
             .entity(entity)
-            .remove::<(Awaking, ColliderDisabled)>()
+            .remove::<(Awaking, Squishy, ColliderDisabled)>()
             .insert((
                 Awake {
                     since: time.elapsed(),
@@ -286,6 +309,7 @@ fn restrict_number_of_enemies_awake(
     mut commands: Commands,
     mut enemies: Query<(Entity, &Transform, &mut LinearVelocity), (With<Enemy>, With<Awake>)>,
     player: Single<&Transform, With<Player>>,
+    time: Res<Time<Virtual>>,
 ) {
     // disable enemies that are furthest away from the player, but only if we have more
     // than 128 active enemies
@@ -302,10 +326,12 @@ fn restrict_number_of_enemies_awake(
         mov.0 = Vec2::ZERO;
 
         // revert into sleeping state
-        commands
-            .entity(*id)
-            .remove::<(Awake, Squishy)>()
-            .insert((Sleeping, ColliderDisabled));
+        commands.entity(*id).remove::<(Awake, Squishy)>().insert((
+            Sleeping {
+                when: time.elapsed(),
+            },
+            ColliderDisabled,
+        ));
     }
 }
 

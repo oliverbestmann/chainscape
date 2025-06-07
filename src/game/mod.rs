@@ -1,6 +1,8 @@
 use ::rand::seq::IndexedRandom;
-use avian2d::prelude::Gravity;
+use avian2d::prelude::{Gravity, SubstepCount};
+use bevy::image::ImageSampler;
 use bevy::prelude::*;
+use bevy::sprite::Anchor;
 
 pub mod assets;
 pub mod cursor;
@@ -32,9 +34,10 @@ pub fn plugin(app: &mut App) {
         powerup::plugin,
     ));
 
-    app.add_systems(OnEnter(Screen::Gameplay), spawn_game);
+    app.add_systems(OnEnter(Screen::Gameplay), (spawn_game, spawn_background));
 
     app.insert_resource(Gravity::ZERO);
+    app.insert_resource(SubstepCount(3));
 }
 
 pub fn spawn_game(mut commands: Commands, mut rand: ResMut<Rand>, assets: Res<Assets>) {
@@ -44,15 +47,11 @@ pub fn spawn_game(mut commands: Commands, mut rand: ResMut<Rand>, assets: Res<As
         player::player_bundle(&assets),
     ));
 
-    for pos in enemy::generate_positions(1, Vec2::ZERO, 256.0, 4096.0, 32.0, 4096) {
-        let enemy = enemy::Enemy {
-            observe_radius: 128.0,
-        };
-
+    for pos in enemy::generate_positions(rand.as_mut(), Vec2::ZERO, 256.0, 4096.0, 32.0, 4096) {
         commands.spawn((
             Name::new("Enemy"),
             StateScoped(Screen::Gameplay),
-            enemy::enemy_bundle(rand.as_mut(), &assets, enemy),
+            enemy::enemy_bundle(rand.as_mut(), &assets),
             Transform::from_translation(pos.extend(1.0)),
         ));
     }
@@ -71,4 +70,25 @@ pub fn spawn_game(mut commands: Commands, mut rand: ResMut<Rand>, assets: Res<As
             Transform::from_translation(pos.extend(1.0)),
         ));
     }
+}
+
+pub fn spawn_background(
+    mut commands: Commands,
+    mut images: ResMut<bevy::asset::Assets<Image>>,
+    assets: Res<Assets>,
+) {
+    let image = images.get_mut(&assets.noise).unwrap();
+    image.sampler = ImageSampler::nearest();
+
+    commands.spawn((
+        Name::new("Background"),
+        StateScoped(Screen::Gameplay),
+        Transform::from_xyz(0.0, 0.0, -1.0),
+        Sprite {
+            image: assets.noise.clone(),
+            anchor: Anchor::Center,
+            custom_size: Some(Vec2::splat(16.0 * 1024.0)),
+            ..default()
+        },
+    ));
 }

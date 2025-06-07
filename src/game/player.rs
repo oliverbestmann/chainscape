@@ -1,6 +1,7 @@
 use crate::game::cursor::{MainCamera, WorldCursor};
 use crate::game::movement::Movement;
 use crate::game::powerup::Powerup;
+use crate::game::screens::Screen;
 use crate::game::squishy::Squishy;
 use crate::{AppSystems, Pause, game};
 use avian2d::prelude::{
@@ -18,8 +19,15 @@ pub fn plugin(app: &mut App) {
             handle_player_collision,
             handle_player_input,
             handle_player_input_touch,
-            camera_follow,
         )
+            .run_if(in_state(Screen::Gameplay))
+            .in_set(AppSystems::Update),
+    );
+
+    app.add_systems(
+        PostUpdate,
+        camera_follow_player
+            .run_if(in_state(Screen::Gameplay))
             .in_set(AppSystems::Update),
     );
 }
@@ -43,7 +51,7 @@ pub fn player_bundle(assets: &game::Assets) -> impl Bundle {
         Sprite {
             image: assets.player.clone(),
             custom_size: Some(Vec2::splat(32.0)),
-            color: Color::srgba_u8(220, 105, 190, 255),
+            color: Color::oklch(0.645, 0.260, 2.47),
             anchor: Anchor::Center,
             ..default()
         },
@@ -177,21 +185,25 @@ fn handle_player_input_touch(
     }
 }
 
-fn camera_follow(
+fn camera_follow_player(
     time: Res<Time<Virtual>>,
     mut camera: Single<&mut Transform, With<MainCamera>>,
-    players: Query<&Transform, (With<Player>, Without<MainCamera>)>,
+    players: Query<(&Transform, &LinearVelocity), (With<Player>, Without<MainCamera>)>,
 ) {
-    let Some(player) = players.iter().next() else {
+    let Some((player_transform, player_velocity)) = players.iter().next() else {
         return;
     };
 
-    let mut target = camera.translation.xy();
+    // the target we want to reach within a short while
+    let target = player_transform.translation.xy() + player_velocity.0;
 
-    // after one second distance is 1/10th
-    let decay_rate = f32::ln(10.0);
+    // current position
+    let mut current = camera.translation.xy();
 
-    target.smooth_nudge(&player.translation.xy(), decay_rate, time.delta_secs());
-    camera.translation.x = target.x;
-    camera.translation.y = target.y;
+    // update current to go to target
+    current.smooth_nudge(&target, 2.0, time.delta_secs());
+
+    // nudge the current camera position into the direction of the target
+    camera.translation.x = current.x;
+    camera.translation.y = current.y;
 }
