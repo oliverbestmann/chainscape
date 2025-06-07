@@ -5,7 +5,7 @@ use crate::game::movement::Movement;
 use crate::game::powerup::{ApplyPowerup, Powerup};
 use crate::game::screens::Screen;
 use crate::game::squishy::Squishy;
-use crate::{game, AppSystems, PausableSystems, Pause};
+use crate::{AppSystems, PausableSystems, Pause, game};
 use avian2d::prelude::{
     Collider, CollisionEventsEnabled, CollisionStarted, LinearVelocity, RigidBody,
 };

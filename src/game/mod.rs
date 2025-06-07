@@ -53,7 +53,12 @@ pub fn plugin(app: &mut App) {
     app.insert_resource(DefaultFriction(Friction::new(0.0)));
 }
 
-fn spawn_game(mut commands: Commands, mut rand: ResMut<Rand>, time: Res<Time<Virtual>>, assets: Res<Assets>) {
+fn spawn_game(
+    mut commands: Commands,
+    mut rand: ResMut<Rand>,
+    time: Res<Time<Virtual>>,
+    assets: Res<Assets>,
+) {
     commands.spawn((
         Name::new("Player"),
         StateScoped(Screen::Gameplay),

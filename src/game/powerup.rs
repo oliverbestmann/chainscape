@@ -1,9 +1,10 @@
 use crate::game;
 use crate::game::enemy::Enemy;
+use crate::game::movement::Movement;
 use crate::game::player::Player;
 use crate::game::screens::Screen;
 use crate::game::squishy::Squishy;
-use avian2d::prelude::{Collider, LinearVelocity, Sensor};
+use avian2d::prelude::{Collider, Sensor};
 use bevy::ecs::system::RunSystemOnce;
 use bevy::math::FloatPow;
 use bevy::prelude::*;
@@ -64,9 +65,9 @@ impl Command for ApplyPowerup {
     }
 }
 
-fn apply_powerup_speed(mut player: Single<&mut LinearVelocity, With<Player>>) {
+fn apply_powerup_speed(mut player: Single<&mut Movement, With<Player>>) {
     info!("Double the players speed until the next turn.");
-    player.0 *= 2.0;
+    player.target_velocity *= 2.0;
 }
 
 fn apply_powerup_explosion(
