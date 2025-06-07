@@ -1,8 +1,9 @@
 use ::rand::seq::IndexedRandom;
-use avian2d::prelude::{Gravity, SubstepCount};
+use avian2d::prelude::{Collider, DefaultFriction, Friction, Gravity, RigidBody, SubstepCount};
 use bevy::image::ImageSampler;
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
+use std::f32::consts::PI;
 
 pub mod assets;
 pub mod cursor;
@@ -37,7 +38,10 @@ pub fn plugin(app: &mut App) {
     ));
 
     app.add_systems(OnEnter(Screen::Reset), reset_to_gameplay);
-    app.add_systems(OnEnter(Screen::Gameplay), (spawn_game, spawn_background));
+    app.add_systems(
+        OnEnter(Screen::Gameplay),
+        (spawn_game, spawn_outer_area, spawn_background),
+    );
 
     app.add_systems(
         Update,
@@ -46,9 +50,10 @@ pub fn plugin(app: &mut App) {
 
     app.insert_resource(Gravity::ZERO);
     app.insert_resource(SubstepCount(3));
+    app.insert_resource(DefaultFriction(Friction::new(0.0)));
 }
 
-pub fn spawn_game(mut commands: Commands, mut rand: ResMut<Rand>, assets: Res<Assets>) {
+fn spawn_game(mut commands: Commands, mut rand: ResMut<Rand>, assets: Res<Assets>) {
     commands.spawn((
         Name::new("Player"),
         StateScoped(Screen::Gameplay),
@@ -80,7 +85,37 @@ pub fn spawn_game(mut commands: Commands, mut rand: ResMut<Rand>, assets: Res<As
     }
 }
 
-pub fn spawn_background(
+fn spawn_outer_area(mut commands: Commands, assets: Res<Assets>) {
+    let radius = 4096.0;
+
+    const STEP_SIZE: f32 = 10.0;
+
+    for idx in 0..36 {
+        let angle_start = (idx as f32 * STEP_SIZE).to_radians();
+
+        let anchor = Vec2::from_angle(angle_start) * radius;
+
+        let segment_length = radius / (2.0 * PI);
+
+        commands.spawn((
+            Name::new("Outer rim"),
+            StateScoped(Screen::Gameplay),
+            RigidBody::Static,
+            Collider::segment(vec2(0.0, -segment_length), vec2(0.0, segment_length)),
+            Transform::from_rotation(Quat::from_rotation_z(angle_start))
+                .with_translation(anchor.extend(0.0)),
+            Sprite {
+                image: assets.square.clone(),
+                custom_size: Some(vec2(64.0, segment_length * 2.0)),
+                anchor: Anchor::CenterLeft,
+                color: Color::srgba(0.2, 0.2, 0.2, 1.0),
+                ..default()
+            },
+        ));
+    }
+}
+
+fn spawn_background(
     mut commands: Commands,
     mut images: ResMut<bevy::asset::Assets<Image>>,
     assets: Res<Assets>,

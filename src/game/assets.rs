@@ -13,6 +13,7 @@ pub struct Assets {
     pub up_explosion: Handle<Image>,
     pub noise: Handle<Image>,
     pub circle: Handle<Image>,
+    pub square: Handle<Image>,
 }
 
 impl FromWorld for Assets {
@@ -26,6 +27,7 @@ impl FromWorld for Assets {
             up_explosion: server.load("images/explosion.png"),
             noise: server.load("images/noise.png"),
             circle: server.load("images/circle.png"),
+            square: server.load("images/square.png"),
         }
     }
 }

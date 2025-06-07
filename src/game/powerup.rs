@@ -50,7 +50,7 @@ pub fn powerup_bundle(assets: &game::Assets, powerup: Powerup) -> impl Bundle {
 pub struct ApplyPowerup(pub Powerup);
 
 impl Command for ApplyPowerup {
-    fn apply(self, world: &mut World) -> () {
+    fn apply(self, world: &mut World) {
         let Self(powerup) = self;
 
         match powerup {
@@ -76,7 +76,7 @@ fn apply_powerup_explosion(
     assets: Res<game::Assets>,
 ) {
     let blast_radius = 256.0;
-    
+
     for (enemy, enemy_transform) in enemies {
         let distance = enemy_transform
             .translation

@@ -5,7 +5,7 @@ use crate::game::movement::Movement;
 use crate::game::powerup::{ApplyPowerup, Powerup};
 use crate::game::screens::Screen;
 use crate::game::squishy::Squishy;
-use crate::{game, AppSystems, PausableSystems, Pause};
+use crate::{AppSystems, PausableSystems, Pause, game};
 use avian2d::prelude::{
     Collider, CollisionEventsEnabled, CollisionStarted, LinearVelocity, RigidBody,
 };
@@ -58,7 +58,7 @@ pub fn player_bundle(assets: &game::Assets) -> impl Bundle {
             anchor: Anchor::Center,
             ..default()
         },
-        RigidBody::Kinematic,
+        RigidBody::Dynamic,
         Collider::circle(16.0),
         LinearVelocity::ZERO,
         CollisionEventsEnabled,
@@ -84,6 +84,9 @@ fn handle_player_collision(
         if let Ok(powerup) = query_powerup.get(collider_entity) {
             info!("Collected powerup {:?}", powerup);
             commands.queue(ApplyPowerup(*powerup));
+
+            // remove the collided entity
+            commands.entity(collider_entity).despawn();
         }
 
         if query_enemies.contains(collider_entity) {
@@ -100,9 +103,6 @@ fn handle_player_collision(
             // pause time
             time.pause();
         }
-
-        // remove the collided entity
-        commands.entity(collider_entity).despawn();
     }
 }
 
