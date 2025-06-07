@@ -50,7 +50,7 @@ impl Highscore {
         None
     }
 
-    pub fn _post(&mut self, player: impl AsRef<str>, score: u32) {
+    pub fn post(&mut self, player: impl AsRef<str>, score: u32) {
         if let Some(task) = self.task.take() {
             // cancel the previous task
             _ = task.cancel();
@@ -103,7 +103,6 @@ impl Highscore {
 fn display_if_available(
     mut commands: Commands,
     mut highscore: ResMut<Highscore>,
-    _handles: Res<game::Assets>,
 ) {
     let Some(mut highscore) = highscore.take() else {
         return;

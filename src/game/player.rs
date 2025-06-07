@@ -1,9 +1,11 @@
 use crate::game::cursor::{MainCamera, WorldCursor};
+use crate::game::enemy::Enemy;
+use crate::game::highscore::{Highscore, ShowHighscore};
 use crate::game::movement::Movement;
 use crate::game::powerup::Powerup;
 use crate::game::screens::Screen;
 use crate::game::squishy::Squishy;
-use crate::{AppSystems, Pause, game};
+use crate::{game, AppSystems, PausableSystems, Pause};
 use avian2d::prelude::{
     Collider, CollisionEventsEnabled, CollisionStarted, LinearVelocity, RigidBody,
 };
@@ -21,7 +23,8 @@ pub fn plugin(app: &mut App) {
             handle_player_input_touch,
         )
             .run_if(in_state(Screen::Gameplay))
-            .in_set(AppSystems::Update),
+            .in_set(AppSystems::Update)
+            .in_set(PausableSystems),
     );
 
     app.add_systems(
@@ -64,10 +67,14 @@ pub fn player_bundle(assets: &game::Assets) -> impl Bundle {
 
 fn handle_player_collision(
     mut commands: Commands,
+    mut time: ResMut<Time<Virtual>>,
     mut events: EventReader<CollisionStarted>,
     mut query_player: Query<(&mut Movement,), With<Player>>,
 
     query_powerup: Query<&Powerup>,
+    query_enemies: Query<(), With<Enemy>>,
+
+    mut highscore: ResMut<Highscore>,
 ) {
     for &CollisionStarted(entity_a, entity_b) in events.read() {
         // sort entities and get the player
@@ -92,6 +99,15 @@ fn handle_player_collision(
                     // TODO
                 }
             }
+        }
+
+        if query_enemies.contains(collider_entity) {
+            highscore.post("Foobar", 123);
+            commands.insert_resource(NextState::Pending(Pause(true)));
+            commands.insert_resource(NextState::Pending(ShowHighscore(true)));
+
+            // pause time
+            time.pause();
         }
 
         // remove the collided entity
