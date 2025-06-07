@@ -53,11 +53,11 @@ pub fn plugin(app: &mut App) {
     app.insert_resource(DefaultFriction(Friction::new(0.0)));
 }
 
-fn spawn_game(mut commands: Commands, mut rand: ResMut<Rand>, assets: Res<Assets>) {
+fn spawn_game(mut commands: Commands, mut rand: ResMut<Rand>, time: Res<Time<Virtual>>, assets: Res<Assets>) {
     commands.spawn((
         Name::new("Player"),
         StateScoped(Screen::Gameplay),
-        player::player_bundle(&assets),
+        player::player_bundle(&time, &assets),
     ));
 
     for pos in enemy::generate_positions(rand.as_mut(), Vec2::ZERO, 256.0, 4096.0, 32.0, 4096) {

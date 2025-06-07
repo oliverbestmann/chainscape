@@ -41,12 +41,12 @@ struct HighscoreItem {
 
 type Response = Result<Vec<HighscoreItem>, String>;
 
-pub struct ShowHighscore {
+pub struct RecordHighscore {
     pub player: String,
     pub score: u32,
 }
 
-impl Command for ShowHighscore {
+impl Command for RecordHighscore {
     fn apply(self, world: &mut World) {
         // show the highscore screen
         world.insert_resource(NextState::Pending(HighscoreState::Loading));

@@ -1,11 +1,11 @@
 use crate::game::cursor::{MainCamera, WorldCursor};
 use crate::game::enemy::Enemy;
-use crate::game::highscore::ShowHighscore;
+use crate::game::highscore::RecordHighscore;
 use crate::game::movement::Movement;
 use crate::game::powerup::{ApplyPowerup, Powerup};
 use crate::game::screens::Screen;
 use crate::game::squishy::Squishy;
-use crate::{AppSystems, PausableSystems, Pause, game};
+use crate::{game, AppSystems, PausableSystems, Pause};
 use avian2d::prelude::{
     Collider, CollisionEventsEnabled, CollisionStarted, LinearVelocity, RigidBody,
 };
@@ -36,11 +36,15 @@ pub fn plugin(app: &mut App) {
 }
 
 #[derive(Component)]
-pub struct Player;
+pub struct Player {
+    born: Duration,
+}
 
-pub fn player_bundle(assets: &game::Assets) -> impl Bundle {
+pub fn player_bundle(time: &Time<Virtual>, assets: &game::Assets) -> impl Bundle {
     (
-        Player,
+        Player {
+            born: time.elapsed(),
+        },
         Movement {
             target_velocity: Vec2::ZERO,
             angular_velocity: 8.0,
@@ -69,7 +73,7 @@ fn handle_player_collision(
     mut commands: Commands,
     mut time: ResMut<Time<Virtual>>,
     mut events: EventReader<CollisionStarted>,
-    query_player: Query<(), With<Player>>,
+    query_player: Query<&Player>,
 
     query_powerup: Query<&Powerup>,
     query_enemies: Query<(), With<Enemy>>,
@@ -77,7 +81,7 @@ fn handle_player_collision(
     for &CollisionStarted(entity_a, entity_b) in events.read() {
         // sort entities and get the player
         let a_is_player = query_player.contains(entity_a);
-        let _player_entity = if a_is_player { entity_a } else { entity_b };
+        let player_entity = if a_is_player { entity_a } else { entity_b };
         let collider_entity = if a_is_player { entity_b } else { entity_a };
 
         // check if we have collided with a powerup
@@ -90,10 +94,13 @@ fn handle_player_collision(
         }
 
         if query_enemies.contains(collider_entity) {
+            let player = query_player.get(player_entity).unwrap();
+
             if let Some(player_name) = player_name() {
-                commands.queue(ShowHighscore {
+                let score = (time.elapsed() - player.born).as_secs() as u32;
+                commands.queue(RecordHighscore {
                     player: player_name,
-                    score: 1234,
+                    score,
                 });
             }
 
