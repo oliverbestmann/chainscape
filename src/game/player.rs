@@ -1,6 +1,6 @@
 use crate::game::cursor::{MainCamera, WorldCursor};
 use crate::game::enemy::Enemy;
-use crate::game::highscore::{Highscore, ShowHighscore};
+use crate::game::highscore::ShowHighscore;
 use crate::game::movement::Movement;
 use crate::game::powerup::Powerup;
 use crate::game::screens::Screen;
@@ -73,8 +73,6 @@ fn handle_player_collision(
 
     query_powerup: Query<&Powerup>,
     query_enemies: Query<(), With<Enemy>>,
-
-    mut highscore: ResMut<Highscore>,
 ) {
     for &CollisionStarted(entity_a, entity_b) in events.read() {
         // sort entities and get the player
@@ -102,9 +100,15 @@ fn handle_player_collision(
         }
 
         if query_enemies.contains(collider_entity) {
-            highscore.post("Foobar", 123);
+            if let Some(player_name) = player_name() {
+                commands.queue(ShowHighscore {
+                    player: player_name,
+                    score: 1234,
+                });
+            }
+
+            // pause the systems
             commands.insert_resource(NextState::Pending(Pause(true)));
-            commands.insert_resource(NextState::Pending(ShowHighscore(true)));
 
             // pause time
             time.pause();
@@ -222,4 +226,16 @@ fn camera_follow_player(
     // nudge the current camera position into the direction of the target
     camera.translation.x = current.x;
     camera.translation.y = current.y;
+}
+
+#[cfg(target_arch = "wasm32")]
+fn player_name() -> Option<String> {
+    web_sys::window()?
+        .get("PlayerName")
+        .and_then(|f| f.as_string())
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn player_name() -> Option<String> {
+    std::env::var("USER").ok().or_else(|| Some("Test".into()))
 }

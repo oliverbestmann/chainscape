@@ -10,5 +10,6 @@ pub fn plugin(app: &mut App) {
 pub enum Screen {
     #[default]
     Loading,
+    Reset,
     Gameplay,
 }

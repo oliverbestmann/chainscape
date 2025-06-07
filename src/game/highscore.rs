@@ -1,42 +1,71 @@
-use crate::game;
 use bevy::app::{App, Update};
 use bevy::prelude::*;
 use bevy::tasks::futures_lite::future;
-use bevy::tasks::{IoTaskPool, Task, block_on};
+use bevy::tasks::{block_on, IoTaskPool, Task};
 use bevy::ui::{Node, Val};
 use serde::Deserialize;
 use tracing::info;
 
 pub fn plugin(app: &mut App) {
+    app.add_event::<HighscoreClosed>();
     app.init_resource::<Highscore>();
-    app.init_state::<ShowHighscore>();
+    app.init_state::<HighscoreState>();
+
+    app.add_systems(OnEnter(HighscoreState::Loading), display_loading);
 
     app.add_systems(
         Update,
-        display_if_available.run_if(in_state(ShowHighscore(true))),
+        (exit_highscore, display_available).run_if(in_state(HighscoreState::Loading)),
+    );
+
+    app.add_systems(
+        Update,
+        (exit_highscore, display_available).run_if(in_state(HighscoreState::Available)),
     );
 }
 
 #[derive(States, Debug, Default, Copy, Clone, Eq, PartialEq, Hash)]
 #[states(scoped_entities)]
-pub struct ShowHighscore(pub bool);
+enum HighscoreState {
+    Loading,
+    Available,
+    #[default]
+    Closed,
+}
 
 #[derive(Debug, Deserialize)]
-pub struct HighscoreItem {
+struct HighscoreItem {
     pub player: String,
     pub score: usize,
 }
 
-pub type Response = Result<Vec<HighscoreItem>, String>;
+type Response = Result<Vec<HighscoreItem>, String>;
+
+pub struct ShowHighscore {
+    pub player: String,
+    pub score: u32,
+}
+
+impl Command for ShowHighscore {
+    fn apply(self, world: &mut World) -> () {
+        // show the highscore screen
+        world.insert_resource(NextState::Pending(HighscoreState::Loading));
+
+        // and post the highscore to the server
+        if let Some(mut highscore) = world.get_resource_mut::<Highscore>() {
+            highscore.post(self.player, self.score);
+        }
+    }
+}
 
 #[derive(Default, Resource)]
-pub struct Highscore {
+struct Highscore {
     // the currently running task that fetches the highscore.
     task: Option<Task<Response>>,
 }
 
 impl Highscore {
-    pub fn take(&mut self) -> Option<Response> {
+    fn take(&mut self) -> Option<Response> {
         if let Some(mut task) = self.task.as_mut() {
             if let Some(resp) = block_on(future::poll_once(&mut task)) {
                 // clear the task
@@ -50,7 +79,7 @@ impl Highscore {
         None
     }
 
-    pub fn post(&mut self, player: impl AsRef<str>, score: u32) {
+    fn post(&mut self, player: impl AsRef<str>, score: u32) {
         if let Some(task) = self.task.take() {
             // cancel the previous task
             _ = task.cancel();
@@ -100,9 +129,10 @@ impl Highscore {
     }
 }
 
-fn display_if_available(
+fn display_available(
     mut commands: Commands,
     mut highscore: ResMut<Highscore>,
+    mut next_state: ResMut<NextState<HighscoreState>>,
 ) {
     let Some(mut highscore) = highscore.take() else {
         return;
@@ -114,9 +144,11 @@ fn display_if_available(
         highscore.reverse();
     }
 
+    next_state.set(HighscoreState::Available);
+
     commands
         .spawn((
-            StateScoped(ShowHighscore(true)),
+            StateScoped(HighscoreState::Available),
             Node {
                 width: Val::Percent(100.0),
                 height: Val::Percent(100.0),
@@ -171,3 +203,67 @@ fn display_if_available(
                 });
         });
 }
+
+fn display_loading(mut commands: Commands) {
+    commands
+        .spawn((
+            StateScoped(HighscoreState::Loading),
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                flex_direction: FlexDirection::Column,
+                ..default()
+            },
+            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.75)),
+        ))
+        .with_children(|parent| {
+            parent
+                .spawn((Node {
+                    width: Val::Percent(100.0),
+                    max_width: Val::Px(320.0),
+                    height: Val::Percent(100.0),
+                    flex_direction: FlexDirection::Column,
+                    justify_content: JustifyContent::Start,
+                    align_self: AlignSelf::Center,
+                    margin: UiRect::px(32.0, 32.0, 32.0, 0.0),
+                    ..default()
+                },))
+                .with_children(|parent| {
+                    parent.spawn((
+                        // the title
+                        Text::new("Highscore"),
+                        Node {
+                            margin: UiRect::bottom(Val::Px(16.0)),
+                            ..Default::default()
+                        },
+                    ));
+
+                    parent.spawn((
+                        // the title
+                        Text::new("Loading..."),
+                    ));
+                });
+        });
+}
+
+fn exit_highscore(
+    mut state: ResMut<NextState<HighscoreState>>,
+    mut events: EventWriter<HighscoreClosed>,
+    buttons: Res<ButtonInput<MouseButton>>,
+    touches: Res<Touches>,
+) {
+    if buttons.get_just_pressed().next().is_some() {
+        state.set(HighscoreState::Closed);
+        events.write(HighscoreClosed);
+        return;
+    }
+
+    if touches.any_just_pressed() {
+        state.set(HighscoreState::Closed);
+        events.write(HighscoreClosed);
+        return;
+    }
+}
+
+#[derive(Event)]
+pub struct HighscoreClosed;

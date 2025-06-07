@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8" />
+    <meta charset="utf-8"/>
 
     <title>Chainscape</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
@@ -10,7 +10,8 @@
     <style>
         /* Styles for the loading screen */
         :root {
-            --web-bg-color: #2b2c2f;
+            --web-bg-color: #111;
+            --web-highlight: oklch(64.5% 0.260 2.47);
             --web-color: white;
         }
 
@@ -40,13 +41,17 @@
             color: var(--web-color);
         }
 
+        #loading-screen {
+            display: none;
+        }
+
         .spinner {
             width: 128px;
             height: 128px;
             border: 64px solid transparent;
-            border-bottom-color: #781178;
-            border-right-color: #9f159f;
-            border-top-color: #f330f3;
+            border-bottom-color: #222;
+            border-right-color: #333;
+            border-top-color: var(--web-highlight);
             border-radius: 50%;
             box-sizing: border-box;
             animation: spin 1.2s linear infinite;
@@ -62,13 +67,57 @@
             }
         }
     </style>
+
+    <style>
+        #player-config {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 200px;
+            font-family: monospace;
+        }
+
+        #player-config button, #player-config input {
+            display: block;
+            width: 100%;
+            font-family: monospace;
+            font-size: 14px;
+            box-sizing: border-box;
+            padding: 8px;
+            background: #222;
+            border: 1px solid var(--web-color);
+        }
+
+        input {
+            color: var(--web-color);
+        }
+
+        button {
+            color: var(--web-highlight);
+        }
+
+        #player-config label {
+            display: block;
+        }
+    </style>
 </head>
 
 <body class="center">
+
 <noscript>JavaScript support is required to run this app</noscript>
 <div id="loading-screen" class="center">
     <span class="spinner"></span>
 </div>
+
+<form id="player-config" onsubmit="return startGame()">
+    <label for="username">
+        Choose a nickname for your highscore entry
+    </label>
+
+    <input type="text" id="username" name="username" placeholder="Your nickname">
+
+    <button type="submit">Start</button>
+</form>
 
 <script type="module">
     // Automatically restart the audio context after user interaction
@@ -133,53 +182,93 @@
 </script>
 
 <script type="module">
-    // Starting the game
+    import initGame from "./build/chainscape.js";
 
-    // When this file is used as the default `index.html`, the CLI will automatically replace
-    // `bevy_app.js` with the name of the generated JS entrypoint. If you copy this file and
-    // customize it, you will need to manually change the name. For more information, please see
-    // <https://thebevyflock.github.io/bevy_cli/cli/web/default-index-html.html>!
-    import init from "./build/chainscape.js";
-    init().catch((error) => {
-        if (
-            !error.message.startsWith(
-                "Using exceptions for control flow, don't mind me. This isn't actually an error!"
-            )
-        ) {
-            throw error;
+    // load wasm in the background to warm up the cache
+    fetch("./build/chainscape_bg.wasm")
+
+    addEventListener("load", () => {
+        try {
+            const player = localStorage.getItem("chainscape.player") ?? "";
+            document.querySelector("#username").value = player;
+        } catch {
+            // do nothing
         }
     });
-</script>
 
-<script type="module">
-    // Hide loading screen when the game starts.
-    const loading_screen = document.getElementById("loading-screen");
-    const observer = new MutationObserver((records) => {
-        for (const record of records) {
-            for (const addedNode of record.addedNodes) {
-                if (addedNode instanceof HTMLCanvasElement) {
-                    if (addedNode.innerText.trim().length === 0) {
-                        // Add compatibility note
-                        addedNode.innerText =
-                            "Canvas support is required to run this app";
-                    }
+    window.startGame = function startGame() {
+        // store player
+        window.Player = document.querySelector("#username").value;
 
-                    // A new canvas has been created, which means that the game has been loaded
-                    // Hide the loading screen!
-                    loading_screen.style.display = "none";
-                    observer.disconnect();
-                    return;
-                }
+        // store player in localStorge for next time
+        try {
+            localStorage.setItem("chainscape.player", window.Player);
+        } catch {
+            // do nothing
+        }
+
+        void startGameAsync()
+
+        return false;
+    }
+
+    async function startGameAsync() {
+        observeGameStart();
+
+        await switchToLoader()
+
+        try {
+            await initGame()
+        } catch (error) {
+            if (!error.message.startsWith(
+                "Using exceptions for control flow, don't mind me. This isn't actually an error!"
+            )) {
+                throw error;
             }
         }
-    });
+    }
 
-    observer.observe(document.body, {
-        subtree: false,
-        childList: true,
-        attributes: false,
-        characterData: false,
-    });
+    async function switchToLoader() {
+        document.querySelector("#loading-screen").style.display = "flex";
+        document.querySelector("#player-config").style.display = "none";
+        await animationFrame();
+    }
+
+    async function animationFrame() {
+        await new Promise(resolve => requestAnimationFrame(() => resolve()));
+    }
+
+    function observeGameStart() {
+        // Hide loading screen when the game starts.
+        const loadingScreen = document.querySelector("#loading-screen");
+
+        const observer = new MutationObserver((records) => {
+            for (const record of records) {
+                for (const addedNode of record.addedNodes) {
+                    if (addedNode instanceof HTMLCanvasElement) {
+                        if (addedNode.innerText.trim().length === 0) {
+                            // Add compatibility note
+                            addedNode.innerText =
+                                "Canvas support is required to run this app";
+                        }
+
+                        // A new canvas has been created, which means that the game has been loaded
+                        // Hide the loading screen!
+                        loadingScreen.style.display = "none";
+                        observer.disconnect();
+                        return;
+                    }
+                }
+            }
+        });
+
+        observer.observe(document.body, {
+            subtree: false,
+            childList: true,
+            attributes: false,
+            characterData: false,
+        });
+    }
 </script>
 </body>
 </html>

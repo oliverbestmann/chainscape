@@ -1,8 +1,8 @@
-use ::rand::seq::IndexedRandom;
 use avian2d::prelude::{Gravity, SubstepCount};
 use bevy::image::ImageSampler;
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
+use ::rand::seq::IndexedRandom;
 
 pub mod assets;
 pub mod cursor;
@@ -15,9 +15,11 @@ pub mod rand;
 pub mod screens;
 pub mod squishy;
 
-use crate::game::powerup::{Powerup, powerup_bundle};
+use crate::game::highscore::HighscoreClosed;
+use crate::game::powerup::{powerup_bundle, Powerup};
 use crate::game::rand::Rand;
 use crate::game::screens::Screen;
+use crate::Pause;
 pub use assets::Assets;
 
 pub fn plugin(app: &mut App) {
@@ -34,7 +36,13 @@ pub fn plugin(app: &mut App) {
         powerup::plugin,
     ));
 
+    app.add_systems(OnEnter(Screen::Reset), reset_to_gameplay);
     app.add_systems(OnEnter(Screen::Gameplay), (spawn_game, spawn_background));
+
+    app.add_systems(
+        Update,
+        reset_at_highscore_closed_event.run_if(in_state(Screen::Gameplay)),
+    );
 
     app.insert_resource(Gravity::ZERO);
     app.insert_resource(SubstepCount(3));
@@ -77,8 +85,9 @@ pub fn spawn_background(
     mut images: ResMut<bevy::asset::Assets<Image>>,
     assets: Res<Assets>,
 ) {
-    let image = images.get_mut(&assets.noise).unwrap();
-    image.sampler = ImageSampler::nearest();
+    if let Some(image) = images.get_mut(&assets.noise) {
+        image.sampler = ImageSampler::nearest();
+    }
 
     commands.spawn((
         Name::new("Background"),
@@ -91,4 +100,23 @@ pub fn spawn_background(
             ..default()
         },
     ));
+}
+
+fn reset_to_gameplay(
+    mut time: ResMut<Time<Virtual>>,
+    mut pause: ResMut<NextState<Pause>>,
+    mut screen: ResMut<NextState<Screen>>,
+) {
+    time.unpause();
+    pause.set(Pause(false));
+    screen.set(Screen::Gameplay);
+}
+
+fn reset_at_highscore_closed_event(
+    mut events: EventReader<HighscoreClosed>,
+    mut screen: ResMut<NextState<Screen>>,
+) {
+    for _event in events.read() {
+        screen.set(Screen::Reset);
+    }
 }

@@ -27,11 +27,11 @@
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="px"
      inkscape:export-bgcolor="#00000000"
-     inkscape:zoom="7.3725356"
-     inkscape:cx="153.27156"
-     inkscape:cy="74.465561"
-     inkscape:window-width="2273"
-     inkscape:window-height="1535"
+     inkscape:zoom="2.4350877"
+     inkscape:cx="48.047551"
+     inkscape:cy="144.96398"
+     inkscape:window-width="1651"
+     inkscape:window-height="1191"
      inkscape:window-x="26"
      inkscape:window-y="23"
      inkscape:window-maximized="0"
@@ -66,7 +66,7 @@
        id="page12"
        margin="0"
        bleed="0"
-       inkscape:export-filename="radius.png"
+       inkscape:export-filename="circle.png"
        inkscape:export-xdpi="192"
        inkscape:export-ydpi="192" />
     <inkscape:page
@@ -169,6 +169,19 @@
          result="blur"
          id="feGaussianBlur7" />
     </filter>
+    <filter
+       style="color-interpolation-filters:sRGB;"
+       inkscape:label="Blur"
+       id="filter1"
+       x="-0.13025823"
+       y="-0.13025823"
+       width="1.2605165"
+       height="1.2605165">
+      <feGaussianBlur
+         stdDeviation="1.4 1.4"
+         result="blur"
+         id="feGaussianBlur1" />
+    </filter>
   </defs>
   <g
      inkscape:label="Layer 1"
@@ -190,11 +203,20 @@
        id="path2"
        sodipodi:nodetypes="cccc" />
     <circle
-       style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.691876;stroke-linejoin:miter;stroke-dasharray:none"
+       style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.526975;stroke-linejoin:miter;stroke-dasharray:none;filter:url(#filter1)"
+       id="circle1"
+       cx="17.491871"
+       cy="54.35545"
+       r="12.897457"
+       inkscape:export-filename="/tmp/radius.png"
+       inkscape:export-xdpi="363.29498"
+       inkscape:export-ydpi="363.29498" />
+    <circle
+       style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.526975;stroke-linejoin:miter;stroke-dasharray:none"
        id="path9"
        cx="17.491871"
        cy="54.35545"
-       r="16.933332"
+       r="12.897457"
        inkscape:export-filename="/tmp/radius.png"
        inkscape:export-xdpi="363.29498"
        inkscape:export-ydpi="363.29498" />
