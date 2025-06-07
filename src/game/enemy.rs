@@ -4,7 +4,8 @@ use crate::game::screens::Screen;
 use crate::game::squishy::Squishy;
 use crate::{AppSystems, game};
 use avian2d::prelude::{
-    Collider, ColliderDisabled, ExternalForce, LinearVelocity, MaxLinearSpeed, RigidBody,
+    AngularVelocity, Collider, ColliderDisabled, ExternalForce, LinearDamping, LinearVelocity,
+    MaxLinearSpeed, RigidBody,
 };
 use bevy::math::FloatPow;
 use bevy::prelude::*;
@@ -19,13 +20,14 @@ pub fn plugin(app: &mut App) {
     app.add_systems(
         Update,
         (
-            observe_surrounding,
-            enemy_sync_image,
-            awaking,
-            hunt_player,
-            collision_avoidance,
+            state_sleeping,
+            state_awaking,
+            state_awake_hunt_player,
+            state_awake_avoid_collisions,
             restrict_number_of_enemies_awake,
+            enemy_sync_image,
         )
+            .chain()
             .run_if(in_state(Screen::Gameplay))
             .in_set(AppSystems::Update),
     );
@@ -167,7 +169,7 @@ pub fn generate_positions(
     positions
 }
 
-fn observe_surrounding(
+fn state_sleeping(
     mut rand: ResMut<Rand>,
     mut commands: Commands,
     mut enemies: Query<(Entity, &Transform, &Sleeping), With<Sleeping>>,
@@ -234,15 +236,13 @@ fn observe_surrounding(
     }
 }
 
-fn awaking(
+fn state_awaking(
     time: Res<Time<Virtual>>,
     mut commands: Commands,
     mut rand: ResMut<Rand>,
     mut enemies: Query<(Entity, &mut Transform, &mut Awaking)>,
 ) {
     for (entity, mut transform, mut awaking) in &mut enemies {
-        // transform.rotation *= Quat::from_rotation_z(awaking.angular_velocity * time.delta_secs());
-
         if !awaking.timer.tick(time.delta()).just_finished() {
             continue;
         }
@@ -251,7 +251,7 @@ fn awaking(
 
         commands
             .entity(entity)
-            .remove::<(Awaking, Squishy, ColliderDisabled)>()
+            .remove::<(Awaking, Squishy, LinearDamping, ColliderDisabled)>()
             .insert((
                 Awake {
                     since: time.elapsed(),
@@ -268,7 +268,7 @@ fn awaking(
     }
 }
 
-fn hunt_player(
+fn state_awake_hunt_player(
     mut rand: ResMut<Rand>,
     time: Res<Time<Virtual>>,
     mut enemies: Query<(&Transform, &mut Awake, &mut LinearVelocity), With<Enemy>>,
@@ -307,7 +307,16 @@ fn hunt_player(
 
 fn restrict_number_of_enemies_awake(
     mut commands: Commands,
-    mut enemies: Query<(Entity, &Transform, &mut LinearVelocity), (With<Enemy>, With<Awake>)>,
+    mut enemies: Query<
+        (
+            Entity,
+            &Transform,
+            &mut LinearVelocity,
+            &mut AngularVelocity,
+            &mut ExternalForce,
+        ),
+        (With<Enemy>, With<Awake>),
+    >,
     player: Single<&Transform, With<Player>>,
     time: Res<Time<Virtual>>,
 ) {
@@ -319,11 +328,14 @@ fn restrict_number_of_enemies_awake(
     }
 
     // sort enemies ascending by
-    enemies
-        .sort_by_cached_key(|(_, tr, _)| OrderedFloat(tr.translation.distance(player.translation)));
+    enemies.sort_by_cached_key(|(_, tr, ..)| {
+        OrderedFloat(tr.translation.distance(player.translation))
+    });
 
-    for (id, _, mov) in enemies.iter_mut().skip(128) {
+    for (id, _, mov, angvel, force) in enemies.iter_mut().skip(128) {
         mov.0 = Vec2::ZERO;
+        angvel.0 = 0.0;
+        force.set_force(Vec2::ZERO);
 
         // revert into sleeping state
         commands.entity(*id).remove::<(Awake, Squishy)>().insert((
@@ -335,7 +347,7 @@ fn restrict_number_of_enemies_awake(
     }
 }
 
-fn collision_avoidance(mut enemies: Query<(&mut ExternalForce, &Transform), With<Awake>>) {
+fn state_awake_avoid_collisions(mut enemies: Query<(&mut ExternalForce, &Transform), With<Awake>>) {
     let mut enemies: Vec<_> = enemies.iter_mut().collect();
 
     for idx in 0..enemies.len() {
