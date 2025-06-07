@@ -93,7 +93,7 @@ struct PausableSystems;
 fn spawn_camera(mut commands: Commands) {
     let mut projection = OrthographicProjection::default_2d();
 
-    const SIZE: f32 = 512.0;
+    const SIZE: f32 = 1024.0;
 
     projection.scaling_mode = camera::ScalingMode::AutoMin {
         min_height: SIZE,

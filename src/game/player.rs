@@ -2,7 +2,7 @@ use crate::game::cursor::{MainCamera, WorldCursor};
 use crate::game::enemy::Enemy;
 use crate::game::highscore::ShowHighscore;
 use crate::game::movement::Movement;
-use crate::game::powerup::Powerup;
+use crate::game::powerup::{ApplyPowerup, Powerup};
 use crate::game::screens::Screen;
 use crate::game::squishy::Squishy;
 use crate::{game, AppSystems, PausableSystems, Pause};
@@ -69,7 +69,7 @@ fn handle_player_collision(
     mut commands: Commands,
     mut time: ResMut<Time<Virtual>>,
     mut events: EventReader<CollisionStarted>,
-    mut query_player: Query<(&mut Movement,), With<Player>>,
+    query_player: Query<(), With<Player>>,
 
     query_powerup: Query<&Powerup>,
     query_enemies: Query<(), With<Enemy>>,
@@ -77,26 +77,13 @@ fn handle_player_collision(
     for &CollisionStarted(entity_a, entity_b) in events.read() {
         // sort entities and get the player
         let a_is_player = query_player.contains(entity_a);
-        let player_entity = if a_is_player { entity_a } else { entity_b };
+        let _player_entity = if a_is_player { entity_a } else { entity_b };
         let collider_entity = if a_is_player { entity_b } else { entity_a };
-
-        let Ok((mut player_velocity,)) = query_player.get_mut(player_entity) else {
-            continue;
-        };
 
         // check if we have collided with a powerup
         if let Ok(powerup) = query_powerup.get(collider_entity) {
             info!("Collected powerup {:?}", powerup);
-
-            match powerup {
-                Powerup::Speed => {
-                    player_velocity.target_velocity *= 2.0;
-                }
-
-                Powerup::Explosion => {
-                    // TODO
-                }
-            }
+            commands.queue(ApplyPowerup(*powerup));
         }
 
         if query_enemies.contains(collider_entity) {

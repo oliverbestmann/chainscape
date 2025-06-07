@@ -1,7 +1,7 @@
 use bevy::app::{App, Update};
 use bevy::prelude::*;
 use bevy::tasks::futures_lite::future;
-use bevy::tasks::{block_on, IoTaskPool, Task};
+use bevy::tasks::{IoTaskPool, Task, block_on};
 use bevy::ui::{Node, Val};
 use serde::Deserialize;
 use tracing::info;
@@ -47,7 +47,7 @@ pub struct ShowHighscore {
 }
 
 impl Command for ShowHighscore {
-    fn apply(self, world: &mut World) -> () {
+    fn apply(self, world: &mut World) {
         // show the highscore screen
         world.insert_resource(NextState::Pending(HighscoreState::Loading));
 
@@ -261,7 +261,6 @@ fn exit_highscore(
     if touches.any_just_pressed() {
         state.set(HighscoreState::Closed);
         events.write(HighscoreClosed);
-        return;
     }
 }
 

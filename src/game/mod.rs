@@ -1,8 +1,8 @@
+use ::rand::seq::IndexedRandom;
 use avian2d::prelude::{Gravity, SubstepCount};
 use bevy::image::ImageSampler;
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
-use ::rand::seq::IndexedRandom;
 
 pub mod assets;
 pub mod cursor;
@@ -15,11 +15,11 @@ pub mod rand;
 pub mod screens;
 pub mod squishy;
 
+use crate::Pause;
 use crate::game::highscore::HighscoreClosed;
-use crate::game::powerup::{powerup_bundle, Powerup};
+use crate::game::powerup::{Powerup, powerup_bundle};
 use crate::game::rand::Rand;
 use crate::game::screens::Screen;
-use crate::Pause;
 pub use assets::Assets;
 
 pub fn plugin(app: &mut App) {
