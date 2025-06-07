@@ -225,7 +225,7 @@ fn camera_follow_player(
 #[cfg(target_arch = "wasm32")]
 fn player_name() -> Option<String> {
     web_sys::window()?
-        .get("PlayerName")
+        .get("Player")
         .and_then(|f| f.as_string())
 }
 
