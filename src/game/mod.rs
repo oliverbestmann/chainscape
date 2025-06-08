@@ -1,11 +1,11 @@
-use ::rand::seq::IndexedRandom;
 use avian2d::prelude::{Collider, DefaultFriction, Friction, Gravity, RigidBody, SubstepCount};
 use bevy::ecs::system::RunSystemOnce;
-use bevy::image::ImageSampler;
+use bevy::image::{ImageFilterMode, ImageSampler};
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
 use fastnoise_lite::FastNoiseLite;
 use fastnoise_lite::NoiseType;
+use ::rand::seq::IndexedRandom;
 use std::f32::consts::PI;
 
 pub mod assets;
@@ -22,13 +22,13 @@ pub mod safezone;
 pub mod screens;
 pub mod squishy;
 
-use crate::Pause;
 use crate::game::cursor::MainCamera;
 use crate::game::highscore::{HighscoreClosed, RecordHighscore};
 use crate::game::player::Player;
-use crate::game::powerup::{Powerup, powerup_bundle};
-use crate::game::rand::{Generate, Rand, weighted_by_noise};
+use crate::game::powerup::{powerup_bundle, Powerup};
+use crate::game::rand::{weighted_by_noise, Generate, Rand};
 use crate::game::screens::Screen;
+use crate::Pause;
 pub use assets::Assets;
 
 pub fn plugin(app: &mut App) {
@@ -52,6 +52,11 @@ pub fn plugin(app: &mut App) {
     app.add_systems(
         OnEnter(Screen::Gameplay),
         (spawn_game, spawn_outer_area, spawn_background),
+    );
+
+    app.add_systems(
+        First,
+        configure_background_image_sampler.run_if(resource_exists::<Assets>),
     );
 
     app.add_systems(
@@ -168,15 +173,7 @@ fn spawn_outer_area(mut commands: Commands, assets: Res<Assets>) {
     }
 }
 
-fn spawn_background(
-    mut commands: Commands,
-    mut images: ResMut<bevy::asset::Assets<Image>>,
-    assets: Res<Assets>,
-) {
-    if let Some(image) = images.get_mut(&assets.noise) {
-        image.sampler = ImageSampler::nearest();
-    }
-
+fn spawn_background(mut commands: Commands, assets: Res<Assets>) {
     commands.spawn((
         Name::new("Background"),
         StateScoped(Screen::Gameplay),
@@ -188,6 +185,24 @@ fn spawn_background(
             ..default()
         },
     ));
+}
+
+fn configure_background_image_sampler(
+    mut images: ResMut<bevy::asset::Assets<Image>>,
+    assets: Res<Assets>,
+) {
+    if let Some(image) = images.get_mut(&assets.noise) {
+        let is_nearest = if let ImageSampler::Descriptor(desc) = &image.sampler {
+            matches!(desc.min_filter, ImageFilterMode::Nearest)
+                && matches!(desc.mag_filter, ImageFilterMode::Nearest)
+        } else {
+            false
+        };
+
+        if !is_nearest {
+            image.sampler = ImageSampler::nearest();
+        }
+    }
 }
 
 fn reset_at_highscore_closed_event(
