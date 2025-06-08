@@ -1,10 +1,10 @@
-use crate::game::EndGame;
 use crate::game::cursor::{MainCamera, WorldCursor};
 use crate::game::enemy::{Awake, Enemy};
 use crate::game::movement::Movement;
 use crate::game::screens::Screen;
 use crate::game::squishy::Squishy;
-use crate::{AppSystems, PausableSystems, Pause, game};
+use crate::game::EndGame;
+use crate::{game, AppSystems, PausableSystems, Pause};
 use avian2d::prelude::{Collider, Collisions, LinearVelocity, RigidBody};
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
@@ -200,24 +200,11 @@ fn handle_player_input_touch(
 }
 
 fn camera_follow_player(
-    time: Res<Time<Virtual>>,
     mut camera: Single<&mut Transform, With<MainCamera>>,
-    players: Query<(&Transform, &LinearVelocity), (With<Player>, Without<MainCamera>)>,
+    player: Single<&Transform, (With<Player>, Without<MainCamera>)>,
 ) {
-    let Some((player_transform, player_velocity)) = players.iter().next() else {
-        return;
-    };
+    let target = player.translation.xy();
 
-    // the target we want to reach within a short while
-    let target = player_transform.translation.xy() + player_velocity.0;
-
-    // current position
-    let mut current = camera.translation.xy();
-
-    // update current to go to target
-    current.smooth_nudge(&target, 2.0, time.delta_secs());
-
-    // nudge the current camera position into the direction of the target
-    camera.translation.x = current.x;
-    camera.translation.y = current.y;
+    camera.translation.x = target.x;
+    camera.translation.y = target.y;
 }

@@ -16,6 +16,7 @@ pub struct Assets {
     pub circle: Handle<Image>,
     pub square: Handle<Image>,
     pub safezone: Handle<Image>,
+    pub arrow: Handle<Image>,
 }
 
 impl FromWorld for Assets {
@@ -32,6 +33,7 @@ impl FromWorld for Assets {
             circle: server.load("images/circle.png"),
             square: server.load("images/square.png"),
             safezone: server.load("images/safezone.png"),
+            arrow: server.load("images/arrow.png"),
         }
     }
 }

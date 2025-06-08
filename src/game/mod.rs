@@ -1,4 +1,3 @@
-use ::rand::seq::IndexedRandom;
 use avian2d::prelude::{Collider, DefaultFriction, Friction, Gravity, RigidBody, SubstepCount};
 use bevy::ecs::system::RunSystemOnce;
 use bevy::image::ImageSampler;
@@ -6,6 +5,7 @@ use bevy::prelude::*;
 use bevy::sprite::Anchor;
 use fastnoise_lite::FastNoiseLite;
 use fastnoise_lite::NoiseType;
+use ::rand::seq::IndexedRandom;
 use std::f32::consts::PI;
 
 pub mod assets;
@@ -13,6 +13,7 @@ pub mod cursor;
 pub mod enemy;
 pub mod highscore;
 mod hud;
+mod markers;
 pub mod movement;
 pub mod player;
 pub mod powerup;
@@ -21,13 +22,13 @@ pub mod safezone;
 pub mod screens;
 pub mod squishy;
 
-use crate::Pause;
 use crate::game::cursor::MainCamera;
 use crate::game::highscore::{HighscoreClosed, RecordHighscore};
 use crate::game::player::Player;
-use crate::game::powerup::{Powerup, powerup_bundle};
-use crate::game::rand::{Generate, Rand, weighted_by_noise};
+use crate::game::powerup::{powerup_bundle, Powerup};
+use crate::game::rand::{weighted_by_noise, Generate, Rand};
 use crate::game::screens::Screen;
+use crate::Pause;
 pub use assets::Assets;
 
 pub fn plugin(app: &mut App) {
@@ -44,6 +45,7 @@ pub fn plugin(app: &mut App) {
         powerup::plugin,
         safezone::plugin,
         hud::plugin,
+        markers::plugin,
     ));
 
     app.add_systems(OnEnter(Screen::Reset), reset_to_gameplay);
@@ -90,6 +92,19 @@ fn spawn_game(
             StateScoped(Screen::Gameplay),
             safezone::safezone_bundle(&assets),
             Transform::from_translation(pos.extend(0.0)),
+        ));
+
+        // generate a marker for this safe zone
+        commands.spawn((
+            Name::new("Marker"),
+            StateScoped(Screen::Gameplay),
+            markers::bundle(
+                &assets,
+                markers::Marker {
+                    color: safezone::COLOR,
+                    target: pos,
+                },
+            ),
         ));
     }
 
@@ -212,12 +227,10 @@ fn game_ends_system(
 ) {
     let (player, player_visibility) = &mut *query_player;
 
-    if let Some(player_name) = player_name() {
-        commands.queue(RecordHighscore {
-            player: player_name,
-            score: player.score(time.elapsed()),
-        });
-    }
+    commands.queue(RecordHighscore {
+        player: player_name(),
+        score: player.score(time.elapsed()),
+    });
 
     if !end_game.win {
         // hide the player
@@ -232,11 +245,18 @@ fn game_ends_system(
 }
 
 #[cfg(target_arch = "wasm32")]
-fn player_name() -> Option<String> {
-    web_sys::window()?.get("Player").and_then(|f| f.as_string())
+fn player_name() -> String {
+    web_sys::window()?
+        .get("Player")
+        .and_then(|f| f.as_string())
+        .filter(|name| name.chars().any(|ch| !ch.is_whitespace()))
+        .unwrap_or_else(|| String::from("Unknown"))
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-fn player_name() -> Option<String> {
-    std::env::var("USER").ok().or_else(|| Some("Test".into()))
+fn player_name() -> String {
+    std::env::var("USER")
+        .ok()
+        .filter(|name| name.chars().any(|ch| !ch.is_whitespace()))
+        .unwrap_or_else(|| String::from("Test"))
 }

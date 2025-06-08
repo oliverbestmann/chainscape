@@ -103,5 +103,6 @@ fn spawn_camera(mut commands: Commands) {
         Camera2d,
         MainCamera,
         Projection::Orthographic(projection),
+        Msaa::Off,
     ));
 }

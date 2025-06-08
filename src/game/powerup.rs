@@ -1,5 +1,5 @@
 use crate::game;
-use crate::game::enemy::Enemy;
+use crate::game::enemy::{Awake, Enemy};
 use crate::game::movement::Movement;
 use crate::game::player::Player;
 use crate::game::rand::Rand;
@@ -104,7 +104,7 @@ fn handle_delayed_explosions(
     mut rand: ResMut<Rand>,
     mut player: Single<(Entity, &mut DelayedExplosion, &mut Player, &Transform), Without<Text2d>>,
     mut label: Query<(&mut Text2d, &mut Transform)>,
-    enemies: Query<(Entity, &Transform), (With<Enemy>, Without<Text2d>)>,
+    enemies: Query<(Entity, &Transform, Has<Awake>), (With<Enemy>, Without<Text2d>)>,
     assets: Res<game::Assets>,
     time: Res<Time>,
 ) {
@@ -129,7 +129,7 @@ fn handle_delayed_explosions(
 
     let blast_radius = rand.random_range(200.0..300.0);
 
-    for (enemy, enemy_transform) in enemies {
+    for (enemy, enemy_transform, enemy_is_awake) in enemies {
         let distance = enemy_transform
             .translation
             .xy()
@@ -144,6 +144,11 @@ fn handle_delayed_explosions(
 
         // and count for scoring
         player.kill_count += 1;
+
+        if enemy_is_awake {
+            // extra score if enemy was alive
+            player.bonus_score += 5;
+        }
     }
 
     // spawn an explosion circle

@@ -1,7 +1,7 @@
-use crate::game::EndGame;
 use crate::game::player::Player;
 use crate::game::screens::Screen;
-use crate::{PausableSystems, game};
+use crate::game::EndGame;
+use crate::{game, PausableSystems};
 use avian2d::prelude::{Collider, Collisions, Sensor};
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
@@ -16,6 +16,8 @@ pub fn plugin(app: &mut App) {
     );
 }
 
+pub const COLOR: Color = Color::oklch(0.918, 0.238, 127.48);
+
 #[derive(Component)]
 pub struct Safezone;
 pub fn safezone_bundle(assets: &game::Assets) -> impl Bundle {
@@ -25,7 +27,7 @@ pub fn safezone_bundle(assets: &game::Assets) -> impl Bundle {
             image: assets.safezone.clone(),
             custom_size: Some(Vec2::splat(128.0)),
             anchor: Anchor::Center,
-            color: Color::oklch(0.918, 0.238, 127.48),
+            color: COLOR,
             ..default()
         },
         Sensor,
@@ -43,11 +45,9 @@ fn safezone_sync_color(
             .xy()
             .distance(player.translation.xy());
 
-        if distance < 256.0 {
-            let alpha = 0.25 + 0.75 * (1.0 - distance / 256.0);
-            if sprite.color.alpha() != alpha {
-                sprite.color.set_alpha(alpha);
-            }
+        let alpha = 0.25 + 0.75 * (1.0 - distance.min(256.0) / 256.0);
+        if sprite.color.alpha() != alpha {
+            sprite.color.set_alpha(alpha);
         }
     }
 }
