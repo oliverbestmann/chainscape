@@ -82,7 +82,7 @@ pub fn enemy_bundle(rand: &mut Rand, assets: &game::Assets) -> impl Bundle {
         LinearVelocity::ZERO,
         MaxLinearSpeed(rand.random_range(100.0..120.0)),
         ExternalForce::ZERO.with_persistence(false),
-        ColliderDisabled,
+        // ColliderDisabled,
     )
 }
 
@@ -342,7 +342,7 @@ fn restrict_number_of_enemies_awake(
             Sleeping {
                 when: time.elapsed(),
             },
-            ColliderDisabled,
+            // ColliderDisabled,
         ));
     }
 }

@@ -22,6 +22,7 @@ pub fn plugin(app: &mut App) {
 pub enum Powerup {
     Speed,
     Explosion,
+    Coin,
 }
 
 pub fn powerup_bundle(assets: &game::Assets, powerup: Powerup) -> impl Bundle {
@@ -31,9 +32,10 @@ pub fn powerup_bundle(assets: &game::Assets, powerup: Powerup) -> impl Bundle {
             image: match powerup {
                 Powerup::Speed => assets.up_speed.clone(),
                 Powerup::Explosion => assets.up_explosion.clone(),
+                Powerup::Coin => assets.up_coin.clone(),
             },
             color: Color::oklch(0.868, 0.174, 90.43),
-            custom_size: Some(Vec2::splat(32.0)),
+            custom_size: Some(Vec2::splat(48.0)),
             anchor: Anchor::Center,
             ..default()
         },
@@ -44,7 +46,7 @@ pub fn powerup_bundle(assets: &game::Assets, powerup: Powerup) -> impl Bundle {
             scale_max: Vec2::splat(1.2),
         },
         Sensor,
-        Collider::circle(16.0),
+        Collider::circle(24.0),
     )
 }
 
@@ -61,6 +63,9 @@ impl Command for ApplyPowerup {
             Powerup::Explosion => {
                 _ = world.run_system_once(apply_powerup_explosion);
             }
+            Powerup::Coin => {
+                _ = world.run_system_once(apply_powerup_coin);
+            }
         }
     }
 }
@@ -68,6 +73,11 @@ impl Command for ApplyPowerup {
 fn apply_powerup_speed(mut player: Single<&mut Movement, With<Player>>) {
     info!("Double the players speed until the next turn.");
     player.target_velocity *= 2.0;
+}
+
+fn apply_powerup_coin(mut player: Single<&mut Player>) {
+    // add bonus score
+    player.bonus_score += 10;
 }
 
 fn apply_powerup_explosion(

@@ -13,6 +13,7 @@ pub mod movement;
 pub mod player;
 pub mod powerup;
 pub mod rand;
+pub mod safezone;
 pub mod screens;
 pub mod squishy;
 
@@ -35,6 +36,7 @@ pub fn plugin(app: &mut App) {
         enemy::plugin,
         highscore::plugin,
         powerup::plugin,
+        safezone::plugin,
     ));
 
     app.add_systems(OnEnter(Screen::Reset), reset_to_gameplay);
@@ -63,6 +65,15 @@ fn spawn_game(
         Name::new("Player"),
         StateScoped(Screen::Gameplay),
         player::player_bundle(&time, &assets),
+        Transform::from_xyz(0.0, 0.0, 0.5),
+    ));
+
+    // place the safe zone
+    commands.spawn((
+        Name::new("SafeZone"),
+        StateScoped(Screen::Gameplay),
+        safezone::safezone_bundle(&assets),
+        Transform::from_xyz(200.0, 100.0, 0.0),
     ));
 
     for pos in enemy::generate_positions(rand.as_mut(), Vec2::ZERO, 256.0, 4096.0, 32.0, 4096) {
@@ -75,10 +86,11 @@ fn spawn_game(
     }
 
     // place some random powerups
-    for _ in 0..64 {
-        let powerup = [Powerup::Speed, Powerup::Explosion]
+    for _ in 0..128 {
+        let powerup = [Powerup::Speed, Powerup::Explosion, Powerup::Coin]
             .choose(&mut *rand)
             .unwrap();
+
         let pos = rand.vec2() * 4096.0;
 
         commands.spawn((

@@ -1,5 +1,5 @@
 use crate::game::cursor::{MainCamera, WorldCursor};
-use crate::game::enemy::Enemy;
+use crate::game::enemy::{Awake, Enemy};
 use crate::game::highscore::RecordHighscore;
 use crate::game::movement::Movement;
 use crate::game::screens::Screen;
@@ -15,7 +15,8 @@ pub fn plugin(app: &mut App) {
     app.add_systems(
         Update,
         (
-            handle_player_enemy_collision,
+            handle_player_enemy_collision_awake,
+            handle_player_enemy_collision_non_awake,
             handle_player_input,
             handle_player_input_touch,
         )
@@ -35,12 +36,18 @@ pub fn plugin(app: &mut App) {
 #[derive(Component)]
 pub struct Player {
     born: Duration,
+    pub bonus_score: u32,
+    pub kill_count: u32,
+    pub safezone_reached: bool,
 }
 
 pub fn player_bundle(time: &Time<Virtual>, assets: &game::Assets) -> impl Bundle {
     (
         Player {
             born: time.elapsed(),
+            bonus_score: 0,
+            kill_count: 0,
+            safezone_reached: false,
         },
         Movement {
             target_velocity: Vec2::ZERO,
@@ -65,11 +72,11 @@ pub fn player_bundle(time: &Time<Virtual>, assets: &game::Assets) -> impl Bundle
     )
 }
 
-fn handle_player_enemy_collision(
+fn handle_player_enemy_collision_awake(
     mut commands: Commands,
     mut time: ResMut<Time<Virtual>>,
     mut query_player: Single<(Entity, &Player, &mut Visibility)>,
-    query_enemies: Query<(), With<Enemy>>,
+    query_enemies: Query<(), (With<Enemy>, With<Awake>)>,
     collisions: Collisions,
 ) {
     let (player_entity, player, player_visibility) = &mut *query_player;
@@ -83,7 +90,7 @@ fn handle_player_enemy_collision(
                     score,
                 });
             }
-            
+
             // hide the player
             player_visibility.set_if_neq(Visibility::Hidden);
 
@@ -94,6 +101,25 @@ fn handle_player_enemy_collision(
             time.pause();
 
             return;
+        }
+    }
+}
+
+fn handle_player_enemy_collision_non_awake(
+    mut commands: Commands,
+    mut query_player: Single<(Entity, &mut Player)>,
+    query_enemies: Query<(), (With<Enemy>, Without<Awake>)>,
+    collisions: Collisions,
+) {
+    let (player_entity, player) = &mut *query_player;
+
+    for collider in collisions.entities_colliding_with(*player_entity) {
+        if query_enemies.contains(collider) {
+            // kill that enemy
+            player.kill_count += 1;
+
+            //  and remove it from the map
+            commands.entity(collider).despawn();
         }
     }
 }
