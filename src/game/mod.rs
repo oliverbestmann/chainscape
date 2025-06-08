@@ -1,5 +1,6 @@
 use ::rand::seq::IndexedRandom;
 use avian2d::prelude::{Collider, DefaultFriction, Friction, Gravity, RigidBody, SubstepCount};
+use bevy::ecs::system::RunSystemOnce;
 use bevy::image::ImageSampler;
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
@@ -18,7 +19,8 @@ pub mod screens;
 pub mod squishy;
 
 use crate::Pause;
-use crate::game::highscore::HighscoreClosed;
+use crate::game::highscore::{HighscoreClosed, RecordHighscore};
+use crate::game::player::Player;
 use crate::game::powerup::{Powerup, powerup_bundle};
 use crate::game::rand::Rand;
 use crate::game::screens::Screen;
@@ -171,4 +173,52 @@ fn reset_at_highscore_closed_event(
     for _event in events.read() {
         screen.set(Screen::Reset);
     }
+}
+
+pub struct EndGame {
+    pub win: bool,
+}
+
+impl Command for EndGame {
+    fn apply(self, world: &mut World) {
+        _ = world.run_system_once_with(game_ends_system, self);
+    }
+}
+
+fn game_ends_system(
+    end_game: In<EndGame>,
+    mut commands: Commands,
+    mut time: ResMut<Time<Virtual>>,
+    mut query_player: Single<(&Player, &mut Visibility)>,
+) {
+    let (player, player_visibility) = &mut *query_player;
+
+    if let Some(player_name) = player_name() {
+        let score = (time.elapsed() - player.born).as_secs() as u32;
+        commands.queue(RecordHighscore {
+            player: player_name,
+            score,
+        });
+    }
+
+    if !end_game.win {
+        // hide the player
+        player_visibility.set_if_neq(Visibility::Hidden);
+    }
+
+    // pause the systems
+    commands.insert_resource(NextState::Pending(Pause(true)));
+
+    // pause time
+    time.pause();
+}
+
+#[cfg(target_arch = "wasm32")]
+fn player_name() -> Option<String> {
+    web_sys::window()?.get("Player").and_then(|f| f.as_string())
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn player_name() -> Option<String> {
+    std::env::var("USER").ok().or_else(|| Some("Test".into()))
 }

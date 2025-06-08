@@ -1,6 +1,6 @@
+use crate::game::EndGame;
 use crate::game::cursor::{MainCamera, WorldCursor};
 use crate::game::enemy::{Awake, Enemy};
-use crate::game::highscore::RecordHighscore;
 use crate::game::movement::Movement;
 use crate::game::screens::Screen;
 use crate::game::squishy::Squishy;
@@ -35,7 +35,7 @@ pub fn plugin(app: &mut App) {
 
 #[derive(Component)]
 pub struct Player {
-    born: Duration,
+    pub born: Duration,
     pub bonus_score: u32,
     pub kill_count: u32,
     pub safezone_reached: bool,
@@ -74,32 +74,13 @@ pub fn player_bundle(time: &Time<Virtual>, assets: &game::Assets) -> impl Bundle
 
 fn handle_player_enemy_collision_awake(
     mut commands: Commands,
-    mut time: ResMut<Time<Virtual>>,
-    mut query_player: Single<(Entity, &Player, &mut Visibility)>,
+    player: Single<Entity, With<Player>>,
     query_enemies: Query<(), (With<Enemy>, With<Awake>)>,
     collisions: Collisions,
 ) {
-    let (player_entity, player, player_visibility) = &mut *query_player;
-
-    for collider in collisions.entities_colliding_with(*player_entity) {
+    for collider in collisions.entities_colliding_with(*player) {
         if query_enemies.contains(collider) {
-            if let Some(player_name) = player_name() {
-                let score = (time.elapsed() - player.born).as_secs() as u32;
-                commands.queue(RecordHighscore {
-                    player: player_name,
-                    score,
-                });
-            }
-
-            // hide the player
-            player_visibility.set_if_neq(Visibility::Hidden);
-
-            // pause the systems
-            commands.insert_resource(NextState::Pending(Pause(true)));
-
-            // pause time
-            time.pause();
-
+            commands.queue(EndGame { win: false });
             return;
         }
     }
@@ -231,14 +212,4 @@ fn camera_follow_player(
     // nudge the current camera position into the direction of the target
     camera.translation.x = current.x;
     camera.translation.y = current.y;
-}
-
-#[cfg(target_arch = "wasm32")]
-fn player_name() -> Option<String> {
-    web_sys::window()?.get("Player").and_then(|f| f.as_string())
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-fn player_name() -> Option<String> {
-    std::env::var("USER").ok().or_else(|| Some("Test".into()))
 }

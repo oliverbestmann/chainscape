@@ -1,6 +1,7 @@
-use crate::game;
+use crate::game::EndGame;
 use crate::game::player::Player;
 use crate::game::screens::Screen;
+use crate::{PausableSystems, game};
 use avian2d::prelude::{Collider, Collisions, Sensor};
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
@@ -10,7 +11,8 @@ pub fn plugin(app: &mut App) {
         Update,
         (safezone_reached, safezone_sync_color)
             .chain()
-            .run_if(in_state(Screen::Gameplay)),
+            .run_if(in_state(Screen::Gameplay))
+            .in_set(PausableSystems),
     );
 }
 
@@ -42,6 +44,7 @@ fn safezone_sync_color(mut query_safezones: Query<(&Safezone, &mut Sprite)>) {
 }
 
 fn safezone_reached(
+    mut commands: Commands,
     collisions: Collisions,
     mut query_safezones: Query<(Entity, &mut Safezone), With<Safezone>>,
     mut query_is_player: Query<&mut Player>,
@@ -58,6 +61,8 @@ fn safezone_reached(
 
             player.safezone_reached = true;
             safezone.active = true;
+
+            commands.queue(EndGame { win: true });
         }
     }
 }
