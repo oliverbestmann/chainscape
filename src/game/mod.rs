@@ -1,4 +1,3 @@
-use ::rand::seq::IndexedRandom;
 use avian2d::prelude::{Collider, DefaultFriction, Friction, Gravity, RigidBody, SubstepCount};
 use bevy::ecs::system::RunSystemOnce;
 use bevy::image::ImageSampler;
@@ -6,12 +5,14 @@ use bevy::prelude::*;
 use bevy::sprite::Anchor;
 use fastnoise_lite::FastNoiseLite;
 use fastnoise_lite::NoiseType;
+use ::rand::seq::IndexedRandom;
 use std::f32::consts::PI;
 
 pub mod assets;
 pub mod cursor;
 pub mod enemy;
 pub mod highscore;
+mod hud;
 pub mod movement;
 pub mod player;
 pub mod powerup;
@@ -19,16 +20,15 @@ pub mod rand;
 pub mod safezone;
 pub mod screens;
 pub mod squishy;
-mod hud;
 
-use crate::Pause;
+use crate::game::cursor::MainCamera;
 use crate::game::highscore::{HighscoreClosed, RecordHighscore};
 use crate::game::player::Player;
-use crate::game::powerup::{Powerup, powerup_bundle};
-use crate::game::rand::{Generate, Rand, weighted_by_noise};
+use crate::game::powerup::{powerup_bundle, Powerup};
+use crate::game::rand::{weighted_by_noise, Generate, Rand};
 use crate::game::screens::Screen;
+use crate::Pause;
 pub use assets::Assets;
-use crate::game::cursor::MainCamera;
 
 pub fn plugin(app: &mut App) {
     app.add_plugins((
@@ -78,7 +78,7 @@ fn spawn_game(
 
     camera.translation.x = 0.0;
     camera.translation.y = 0.0;
-    
+
     let mut generator = Generate::new(4096.0, 256.0, Vec2::ZERO);
 
     let random_pos = |radius| rand.vec2() * radius;
@@ -213,10 +213,9 @@ fn game_ends_system(
     let (player, player_visibility) = &mut *query_player;
 
     if let Some(player_name) = player_name() {
-        let score = (time.elapsed() - player.born).as_secs() as u32;
         commands.queue(RecordHighscore {
             player: player_name,
-            score,
+            score: player.score(time.elapsed()),
         });
     }
 
