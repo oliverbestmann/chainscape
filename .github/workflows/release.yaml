@@ -209,7 +209,7 @@ jobs:
         run: |
           cargo binstall --locked --no-confirm --force wasm-bindgen-cli
           cargo binstall --locked --no-confirm --force wasm-opt
-          bevy build --locked --release --features='${{ matrix.features }}' --yes web --wasm-opt=true --bundle
+          env RUSTC_BOOTSTRAP=1 bevy build -Z build-std --locked --release --features='${{ matrix.features }}' --yes web --wasm-opt=true --bundle
           mv 'target/bevy_web/web-release/${{ env.cargo_build_binary_name }}' '${{ env.app }}'
 
       - name: Build and add binaries to app (non-Web)
