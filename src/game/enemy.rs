@@ -10,7 +10,7 @@ use avian2d::prelude::{
 use bevy::math::FloatPow;
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
-use fastnoise_lite::{FastNoiseLite, NoiseType};
+use fastnoise_lite::FastNoiseLite;
 use ordered_float::OrderedFloat;
 use rand::Rng;
 use std::ops::Range;
@@ -20,6 +20,7 @@ pub fn plugin(app: &mut App) {
     app.add_systems(
         Update,
         (
+            enable_disable_colliders_for_not_awake,
             state_sleeping,
             state_awaking,
             state_awake_hunt_player,
@@ -80,10 +81,31 @@ pub fn enemy_bundle(rand: &mut Rand, assets: &game::Assets) -> impl Bundle {
         RigidBody::Dynamic,
         Collider::rectangle(20.0, 20.0),
         LinearVelocity::ZERO,
-        MaxLinearSpeed(rand.random_range(100.0..120.0)),
+        MaxLinearSpeed(rand.random_range(100.0..140.0)),
         ExternalForce::ZERO.with_persistence(false),
-        // ColliderDisabled,
+        ColliderDisabled,
     )
+}
+
+fn enable_disable_colliders_for_not_awake(
+    mut commands: Commands,
+    player: Single<&Transform, With<Player>>,
+    enemies_enabled: Query<(Entity, &Transform), (With<Sleeping>, Without<ColliderDisabled>)>,
+    enemies_disabled: Query<(Entity, &Transform), (With<Sleeping>, With<ColliderDisabled>)>,
+) {
+    let player_pos = player.translation.xy();
+
+    for (entity, transform) in &enemies_enabled {
+        if transform.translation.xy().distance(player_pos) > 256.0 {
+            commands.entity(entity).insert(ColliderDisabled);
+        }
+    }
+
+    for (entity, transform) in &enemies_disabled {
+        if transform.translation.xy().distance(player_pos) <= 256.0 {
+            commands.entity(entity).remove::<ColliderDisabled>();
+        }
+    }
 }
 
 const COLOR_SLEEPING: Color = Color::oklcha(0.668, 0.0, 36.99, 1.00);
@@ -118,55 +140,6 @@ fn enemy_sync_image(
             sprite.color = color;
         }
     }
-}
-
-pub fn generate_positions(
-    rand: &mut Rand,
-    center: Vec2,
-    min_radius: f32,
-    max_radius: f32,
-    clearance: f32,
-    count: usize,
-) -> Vec<Vec2> {
-    let mut noise = FastNoiseLite::with_seed(1);
-    noise.noise_type = NoiseType::Cellular;
-    noise.frequency = 0.001;
-
-    let mut random_point = || {
-        loop {
-            let random: f32 = rand.random();
-
-            let candidate = rand.vec2() * max_radius;
-            let noise_value = (noise.get_noise_2d(candidate.x, candidate.y) + 1.0).min(1.0);
-
-            if random <= noise_value.squared() {
-                return candidate;
-            }
-        }
-    };
-
-    let mut positions = Vec::with_capacity(count);
-    while positions.len() < count {
-        let offset = random_point();
-
-        if !(min_radius..max_radius).contains(&offset.length()) {
-            // out of the circle or to near to the center
-            continue;
-        }
-
-        let pos = center + offset;
-        if positions
-            .iter()
-            .any(|other| pos.distance(*other) < clearance)
-        {
-            // some other position is too near
-            continue;
-        }
-
-        positions.push(pos);
-    }
-
-    positions
 }
 
 fn state_sleeping(
@@ -224,15 +197,18 @@ fn state_sleeping(
         }
 
         // wake the guy up and go into the direction of the player
-        commands.entity(enemy_id).remove::<Sleeping>().insert((
-            Awaking::new(rand.as_mut(), delay_secs_range),
-            Squishy {
-                frequency: 1.0,
-                scale_max: Vec2::splat(1.1),
-                scale_min: Vec2::splat(1.0),
-                offset: time.elapsed(),
-            },
-        ));
+        commands
+            .entity(enemy_id)
+            .remove::<(Sleeping, ColliderDisabled)>()
+            .insert((
+                Awaking::new(rand.as_mut(), delay_secs_range),
+                Squishy {
+                    frequency: 1.0,
+                    scale_max: Vec2::splat(1.1),
+                    scale_min: Vec2::splat(1.0),
+                    offset: time.elapsed(),
+                },
+            ));
     }
 }
 
@@ -301,7 +277,7 @@ fn state_awake_hunt_player(
         // get vector to target
         let target = player.translation.xy() + rand.vec2() * 32.0;
         let offset = target - enemy_transform.translation.xy();
-        enemy_movement.0 = offset.normalize() * rand.random_range(100.0..120.0);
+        enemy_movement.0 = offset.normalize() * rand.random_range(100.0..140.0);
     }
 }
 
@@ -342,7 +318,7 @@ fn restrict_number_of_enemies_awake(
             Sleeping {
                 when: time.elapsed(),
             },
-            // ColliderDisabled,
+            ColliderDisabled,
         ));
     }
 }

@@ -4,6 +4,8 @@ use bevy::ecs::system::RunSystemOnce;
 use bevy::image::ImageSampler;
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
+use fastnoise_lite::FastNoiseLite;
+use fastnoise_lite::NoiseType;
 use std::f32::consts::PI;
 
 pub mod assets;
@@ -22,7 +24,7 @@ use crate::Pause;
 use crate::game::highscore::{HighscoreClosed, RecordHighscore};
 use crate::game::player::Player;
 use crate::game::powerup::{Powerup, powerup_bundle};
-use crate::game::rand::Rand;
+use crate::game::rand::{Generate, Rand, weighted_by_noise};
 use crate::game::screens::Screen;
 pub use assets::Assets;
 
@@ -70,35 +72,45 @@ fn spawn_game(
         Transform::from_xyz(0.0, 0.0, 0.5),
     ));
 
-    // place the safe zone
-    commands.spawn((
-        Name::new("SafeZone"),
-        StateScoped(Screen::Gameplay),
-        safezone::safezone_bundle(&assets),
-        Transform::from_xyz(200.0, 100.0, 0.0),
-    ));
+    let mut generator = Generate::new(4096.0, 256.0, Vec2::ZERO);
 
-    for pos in enemy::generate_positions(rand.as_mut(), Vec2::ZERO, 256.0, 4096.0, 32.0, 4096) {
+    let random_pos = |radius| rand.vec2() * radius;
+
+    for pos in generator.generate(random_pos, 3, 384.0) {
+        // place the safe zone
         commands.spawn((
-            Name::new("Enemy"),
+            Name::new("SafeZone"),
             StateScoped(Screen::Gameplay),
-            enemy::enemy_bundle(rand.as_mut(), &assets),
-            Transform::from_translation(pos.extend(1.0)),
+            safezone::safezone_bundle(&assets),
+            Transform::from_translation(pos.extend(0.0)),
         ));
     }
 
-    // place some random powerups
-    for _ in 0..128 {
+    // place some random powerups with some space around them
+    let random_pos = |radius| rand.vec2() * radius;
+    for pos in generator.generate(random_pos, 128, 128.0) {
         let powerup = [Powerup::Speed, Powerup::Explosion, Powerup::Coin]
             .choose(&mut *rand)
             .unwrap();
-
-        let pos = rand.vec2() * 4096.0;
 
         commands.spawn((
             Name::new("Powerup"),
             StateScoped(Screen::Gameplay),
             powerup_bundle(&assets, *powerup),
+            Transform::from_translation(pos.extend(1.0)),
+        ));
+    }
+
+    // place zombies based on noise values in chunks
+    let mut noise = FastNoiseLite::with_seed(1);
+    noise.noise_type = NoiseType::Cellular;
+    noise.frequency = 0.001;
+
+    for pos in generator.generate(weighted_by_noise(rand.as_mut(), noise), 4096, 32.0) {
+        commands.spawn((
+            Name::new("Enemy"),
+            StateScoped(Screen::Gameplay),
+            enemy::enemy_bundle(rand.as_mut(), &assets),
             Transform::from_translation(pos.extend(1.0)),
         ));
     }

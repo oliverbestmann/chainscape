@@ -29,7 +29,7 @@ pub fn safezone_bundle(assets: &game::Assets) -> impl Bundle {
             ..default()
         },
         Sensor,
-        Collider::round_rectangle(64.0, 64.0, 8.0),
+        Collider::round_rectangle(48.0, 48.0, 8.0),
     )
 }
 
@@ -64,6 +64,7 @@ fn safezone_reached(
                 continue;
             };
 
+            // give player an extra bonus for reaching the safezone
             player.safezone_reached = true;
 
             commands.queue(EndGame { win: true });
