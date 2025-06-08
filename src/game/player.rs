@@ -68,11 +68,11 @@ pub fn player_bundle(time: &Time<Virtual>, assets: &game::Assets) -> impl Bundle
 fn handle_player_enemy_collision(
     mut commands: Commands,
     mut time: ResMut<Time<Virtual>>,
-    query_player: Single<(Entity, &Player)>,
+    mut query_player: Single<(Entity, &Player, &mut Visibility)>,
     query_enemies: Query<(), With<Enemy>>,
     collisions: Collisions,
 ) {
-    let (player_entity, player) = &*query_player;
+    let (player_entity, player, player_visibility) = &mut *query_player;
 
     for collider in collisions.entities_colliding_with(*player_entity) {
         if query_enemies.contains(collider) {
@@ -83,6 +83,9 @@ fn handle_player_enemy_collision(
                     score,
                 });
             }
+            
+            // hide the player
+            player_visibility.set_if_neq(Visibility::Hidden);
 
             // pause the systems
             commands.insert_resource(NextState::Pending(Pause(true)));
