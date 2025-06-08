@@ -200,7 +200,7 @@ fn state_sleeping(
         commands
             .entity(enemy_id)
             .remove::<(Sleeping, ColliderDisabled)>()
-            .insert((
+            .try_insert((
                 Awaking::new(rand.as_mut(), delay_secs_range),
                 Squishy {
                     frequency: 1.0,

@@ -1,5 +1,6 @@
 use crate::game;
 use crate::game::enemy::{Awake, Enemy};
+use crate::game::hud::AddScore;
 use crate::game::movement::Movement;
 use crate::game::player::Player;
 use crate::game::rand::Rand;
@@ -83,9 +84,19 @@ fn apply_powerup_speed(mut player: Single<&mut Movement, With<Player>>) {
     player.target_velocity *= 2.0;
 }
 
-fn apply_powerup_coin(mut player: Single<&mut Player>) {
+fn apply_powerup_coin(
+    mut rand: ResMut<Rand>,
+    mut player: Single<(&mut Player, &Transform)>,
+    mut add_score: EventWriter<AddScore>,
+) {
+    let (player, player_transform) = &mut *player;
+
     // add bonus score
-    player.bonus_score += 50;
+    let score = player.add_score(rand.random_range(3..=6) * 10);
+    add_score.write(AddScore {
+        score,
+        position: player_transform.translation.xy(),
+    });
 }
 
 fn apply_powerup_explosion(mut commands: Commands, player: Single<Entity, With<Player>>) {
@@ -107,6 +118,7 @@ fn handle_delayed_explosions(
     enemies: Query<(Entity, &Transform, Has<Awake>), (With<Enemy>, Without<Text2d>)>,
     assets: Res<game::Assets>,
     time: Res<Time>,
+    mut add_score: EventWriter<AddScore>,
 ) {
     let (player_entity, explosion, player, player_transform) = &mut *player;
 
@@ -142,13 +154,10 @@ fn handle_delayed_explosions(
         // kill enemy
         commands.entity(enemy).despawn();
 
-        // and count for scoring
-        player.kill_count += 1;
-
-        if enemy_is_awake {
-            // extra score if enemy was alive
-            player.bonus_score += 5;
-        }
+        add_score.write(AddScore {
+            score: player.add_kill(enemy_is_awake),
+            position: enemy_transform.translation.xy(),
+        });
     }
 
     // spawn an explosion circle

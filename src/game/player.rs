@@ -1,6 +1,7 @@
 use crate::game::EndGame;
 use crate::game::cursor::{MainCamera, WorldCursor};
 use crate::game::enemy::{Awake, Enemy};
+use crate::game::hud::AddScore;
 use crate::game::movement::Movement;
 use crate::game::screens::Screen;
 use crate::game::squishy::Squishy;
@@ -35,17 +36,29 @@ pub fn plugin(app: &mut App) {
 
 #[derive(Component)]
 pub struct Player {
-    pub born: Duration,
-    pub bonus_score: u32,
-    pub kill_count: u32,
+    born: Duration,
     pub safezone_reached: bool,
+    pub kill_count: u32,
+    score: u32,
 }
 
 impl Player {
     pub fn score(&self, now: Duration) -> u32 {
         let age = (now - self.born).as_secs() as u32;
         let safezone = if self.safezone_reached { 100 } else { 0 };
-        age + self.bonus_score + self.kill_count * 10 + safezone
+        age + self.score + safezone
+    }
+
+    pub fn add_kill(&mut self, awake: bool) -> u32 {
+        self.kill_count += 1;
+        let delta = if awake { 15 } else { 5 };
+        self.score += delta;
+        delta
+    }
+
+    pub fn add_score(&mut self, delta: u32) -> u32 {
+        self.score += delta;
+        delta
     }
 }
 
@@ -53,8 +66,8 @@ pub fn player_bundle(time: &Time<Virtual>, assets: &game::Assets) -> impl Bundle
     (
         Player {
             born: time.elapsed(),
-            bonus_score: 0,
             kill_count: 0,
+            score: 0,
             safezone_reached: false,
         },
         Movement {
@@ -97,15 +110,19 @@ fn handle_player_enemy_collision_awake(
 fn handle_player_enemy_collision_non_awake(
     mut commands: Commands,
     mut query_player: Single<(Entity, &mut Player)>,
-    query_enemies: Query<(), (With<Enemy>, Without<Awake>)>,
+    query_enemies: Query<&Transform, (With<Enemy>, Without<Awake>)>,
+    mut add_score: EventWriter<AddScore>,
     collisions: Collisions,
 ) {
     let (player_entity, player) = &mut *query_player;
 
     for collider in collisions.entities_colliding_with(*player_entity) {
-        if query_enemies.contains(collider) {
-            // kill that enemy
-            player.kill_count += 1;
+        if let Ok(enemy_transform) = query_enemies.get(collider) {
+            // record score for this kill
+            add_score.write(AddScore {
+                position: enemy_transform.translation.xy(),
+                score: player.add_kill(false),
+            });
 
             //  and remove it from the map
             commands.entity(collider).despawn();

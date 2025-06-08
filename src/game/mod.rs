@@ -246,7 +246,11 @@ fn game_ends_system(
 
 #[cfg(target_arch = "wasm32")]
 fn player_name() -> String {
-    web_sys::window()?
+    let Some(window) = web_sys::window() else {
+        return "Unknown".into();
+    };
+
+    window
         .get("Player")
         .and_then(|f| f.as_string())
         .filter(|name| name.chars().any(|ch| !ch.is_whitespace()))
