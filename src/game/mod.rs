@@ -19,6 +19,7 @@ pub mod rand;
 pub mod safezone;
 pub mod screens;
 pub mod squishy;
+mod hud;
 
 use crate::Pause;
 use crate::game::highscore::{HighscoreClosed, RecordHighscore};
@@ -27,6 +28,7 @@ use crate::game::powerup::{Powerup, powerup_bundle};
 use crate::game::rand::{Generate, Rand, weighted_by_noise};
 use crate::game::screens::Screen;
 pub use assets::Assets;
+use crate::game::cursor::MainCamera;
 
 pub fn plugin(app: &mut App) {
     app.add_plugins((
@@ -41,6 +43,7 @@ pub fn plugin(app: &mut App) {
         highscore::plugin,
         powerup::plugin,
         safezone::plugin,
+        hud::plugin,
     ));
 
     app.add_systems(OnEnter(Screen::Reset), reset_to_gameplay);
@@ -62,6 +65,7 @@ pub fn plugin(app: &mut App) {
 fn spawn_game(
     mut commands: Commands,
     mut rand: ResMut<Rand>,
+    mut camera: Single<&mut Transform, With<MainCamera>>,
     time: Res<Time<Virtual>>,
     assets: Res<Assets>,
 ) {
@@ -72,6 +76,9 @@ fn spawn_game(
         Transform::from_xyz(0.0, 0.0, 0.5),
     ));
 
+    camera.translation.x = 0.0;
+    camera.translation.y = 0.0;
+    
     let mut generator = Generate::new(4096.0, 256.0, Vec2::ZERO);
 
     let random_pos = |radius| rand.vec2() * radius;
@@ -168,6 +175,15 @@ fn spawn_background(
     ));
 }
 
+fn reset_at_highscore_closed_event(
+    mut events: EventReader<HighscoreClosed>,
+    mut screen: ResMut<NextState<Screen>>,
+) {
+    for _event in events.read() {
+        screen.set(Screen::Reset);
+    }
+}
+
 fn reset_to_gameplay(
     mut time: ResMut<Time<Virtual>>,
     mut pause: ResMut<NextState<Pause>>,
@@ -176,15 +192,6 @@ fn reset_to_gameplay(
     time.unpause();
     pause.set(Pause(false));
     screen.set(Screen::Gameplay);
-}
-
-fn reset_at_highscore_closed_event(
-    mut events: EventReader<HighscoreClosed>,
-    mut screen: ResMut<NextState<Screen>>,
-) {
-    for _event in events.read() {
-        screen.set(Screen::Reset);
-    }
 }
 
 pub struct EndGame {

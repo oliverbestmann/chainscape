@@ -85,7 +85,7 @@ fn apply_powerup_speed(mut player: Single<&mut Movement, With<Player>>) {
 
 fn apply_powerup_coin(mut player: Single<&mut Player>) {
     // add bonus score
-    player.bonus_score += 10;
+    player.bonus_score += 50;
 }
 
 fn apply_powerup_explosion(mut commands: Commands, player: Single<Entity, With<Player>>) {

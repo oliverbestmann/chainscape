@@ -2,7 +2,7 @@ use crate::game::player::Player;
 use crate::game::rand::Rand;
 use crate::game::screens::Screen;
 use crate::game::squishy::Squishy;
-use crate::{AppSystems, game};
+use crate::{game, AppSystems};
 use avian2d::prelude::{
     AngularVelocity, Collider, ColliderDisabled, ExternalForce, LinearDamping, LinearVelocity,
     MaxLinearSpeed, RigidBody,
@@ -296,10 +296,12 @@ fn restrict_number_of_enemies_awake(
     player: Single<&Transform, With<Player>>,
     time: Res<Time<Virtual>>,
 ) {
+    const MAX: usize = 256;
+
     // disable enemies that are furthest away from the player, but only if we have more
-    // than 128 active enemies
+    // than N active enemies
     let mut enemies: Vec<_> = enemies.iter_mut().collect::<Vec<_>>();
-    if enemies.len() < 128 {
+    if enemies.len() < MAX {
         return;
     }
 
@@ -308,7 +310,7 @@ fn restrict_number_of_enemies_awake(
         OrderedFloat(tr.translation.distance(player.translation))
     });
 
-    for (id, _, mov, angvel, force) in enemies.iter_mut().skip(128) {
+    for (id, _, mov, angvel, force) in enemies.iter_mut().skip(MAX) {
         mov.0 = Vec2::ZERO;
         angvel.0 = 0.0;
         force.set_force(Vec2::ZERO);

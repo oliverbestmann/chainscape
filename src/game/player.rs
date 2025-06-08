@@ -1,10 +1,10 @@
-use crate::game::EndGame;
 use crate::game::cursor::{MainCamera, WorldCursor};
 use crate::game::enemy::{Awake, Enemy};
 use crate::game::movement::Movement;
 use crate::game::screens::Screen;
 use crate::game::squishy::Squishy;
-use crate::{AppSystems, PausableSystems, Pause, game};
+use crate::game::EndGame;
+use crate::{game, AppSystems, PausableSystems, Pause};
 use avian2d::prelude::{Collider, Collisions, LinearVelocity, RigidBody};
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
@@ -39,6 +39,14 @@ pub struct Player {
     pub bonus_score: u32,
     pub kill_count: u32,
     pub safezone_reached: bool,
+}
+
+impl Player {
+    pub fn score(&self, now: Duration) -> u32 {
+        let age = (now - self.born).as_secs() as u32;
+        let safezone = if self.safezone_reached { 100 } else { 0 };
+        age + self.bonus_score + self.kill_count * 10
+    }
 }
 
 pub fn player_bundle(time: &Time<Virtual>, assets: &game::Assets) -> impl Bundle {
