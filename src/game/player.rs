@@ -2,13 +2,10 @@ use crate::game::cursor::{MainCamera, WorldCursor};
 use crate::game::enemy::Enemy;
 use crate::game::highscore::RecordHighscore;
 use crate::game::movement::Movement;
-use crate::game::powerup::{ApplyPowerup, Powerup};
 use crate::game::screens::Screen;
 use crate::game::squishy::Squishy;
 use crate::{AppSystems, PausableSystems, Pause, game};
-use avian2d::prelude::{
-    Collider, CollisionEventsEnabled, CollisionStarted, LinearVelocity, RigidBody,
-};
+use avian2d::prelude::{Collider, Collisions, LinearVelocity, RigidBody};
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
 use std::time::Duration;
@@ -18,7 +15,7 @@ pub fn plugin(app: &mut App) {
     app.add_systems(
         Update,
         (
-            handle_player_collision,
+            handle_player_enemy_collision,
             handle_player_input,
             handle_player_input_touch,
         )
@@ -65,37 +62,20 @@ pub fn player_bundle(time: &Time<Virtual>, assets: &game::Assets) -> impl Bundle
         RigidBody::Dynamic,
         Collider::circle(16.0),
         LinearVelocity::ZERO,
-        CollisionEventsEnabled,
     )
 }
 
-fn handle_player_collision(
+fn handle_player_enemy_collision(
     mut commands: Commands,
     mut time: ResMut<Time<Virtual>>,
-    mut events: EventReader<CollisionStarted>,
-    query_player: Query<&Player>,
-
-    query_powerup: Query<&Powerup>,
+    query_player: Single<(Entity, &Player)>,
     query_enemies: Query<(), With<Enemy>>,
+    collisions: Collisions,
 ) {
-    for &CollisionStarted(entity_a, entity_b) in events.read() {
-        // sort entities and get the player
-        let a_is_player = query_player.contains(entity_a);
-        let player_entity = if a_is_player { entity_a } else { entity_b };
-        let collider_entity = if a_is_player { entity_b } else { entity_a };
+    let (player_entity, player) = &*query_player;
 
-        // check if we have collided with a powerup
-        if let Ok(powerup) = query_powerup.get(collider_entity) {
-            info!("Collected powerup {:?}", powerup);
-            commands.queue(ApplyPowerup(*powerup));
-
-            // remove the collided entity
-            commands.entity(collider_entity).despawn();
-        }
-
-        if query_enemies.contains(collider_entity) {
-            let player = query_player.get(player_entity).unwrap();
-
+    for collider in collisions.entities_colliding_with(*player_entity) {
+        if query_enemies.contains(collider) {
             if let Some(player_name) = player_name() {
                 let score = (time.elapsed() - player.born).as_secs() as u32;
                 commands.queue(RecordHighscore {
@@ -109,6 +89,8 @@ fn handle_player_collision(
 
             // pause time
             time.pause();
+
+            return;
         }
     }
 }
@@ -224,9 +206,7 @@ fn camera_follow_player(
 
 #[cfg(target_arch = "wasm32")]
 fn player_name() -> Option<String> {
-    web_sys::window()?
-        .get("Player")
-        .and_then(|f| f.as_string())
+    web_sys::window()?.get("Player").and_then(|f| f.as_string())
 }
 
 #[cfg(not(target_arch = "wasm32"))]

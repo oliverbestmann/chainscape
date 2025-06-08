@@ -4,7 +4,7 @@ use crate::game::movement::Movement;
 use crate::game::player::Player;
 use crate::game::screens::Screen;
 use crate::game::squishy::Squishy;
-use avian2d::prelude::{Collider, Sensor};
+use avian2d::prelude::{Collider, Collisions, Sensor};
 use bevy::ecs::system::RunSystemOnce;
 use bevy::math::FloatPow;
 use bevy::prelude::*;
@@ -14,7 +14,7 @@ use std::time::Duration;
 pub fn plugin(app: &mut App) {
     app.add_systems(
         Update,
-        explosion_fade_out.run_if(in_state(Screen::Gameplay)),
+        (collect_powerup, explosion_fade_out).run_if(in_state(Screen::Gameplay)),
     );
 }
 
@@ -124,5 +124,26 @@ fn explosion_fade_out(
 
         let alpha = explosion.0.fraction_remaining().squared();
         sprite.color.set_alpha(alpha);
+    }
+}
+
+fn collect_powerup(
+    mut commands: Commands,
+    collisions: Collisions,
+    query_powerups: Query<(Entity, &Powerup)>,
+    player: Single<Entity, With<Player>>,
+) {
+    for (powerup_entity, powerup) in &query_powerups {
+        for collider in collisions.entities_colliding_with(powerup_entity) {
+            if collider != *player {
+                continue;
+            }
+
+            // apply entity to player
+            commands.queue(ApplyPowerup(*powerup));
+
+            // remove the powerup entity
+            commands.entity(powerup_entity).despawn();
+        }
     }
 }
