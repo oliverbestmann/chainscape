@@ -17,13 +17,10 @@ pub fn plugin(app: &mut App) {
 }
 
 #[derive(Component)]
-pub struct Safezone {
-    active: bool,
-}
-
+pub struct Safezone;
 pub fn safezone_bundle(assets: &game::Assets) -> impl Bundle {
     (
-        Safezone { active: false },
+        Safezone,
         Sprite {
             image: assets.safezone.clone(),
             custom_size: Some(Vec2::splat(128.0)),
@@ -36,31 +33,38 @@ pub fn safezone_bundle(assets: &game::Assets) -> impl Bundle {
     )
 }
 
-fn safezone_sync_color(mut query_safezones: Query<(&Safezone, &mut Sprite)>) {
-    for (safezone, mut sprite) in &mut query_safezones {
-        let alpha = if safezone.active { 1.0 } else { 0.75 };
-        sprite.color.set_alpha(alpha);
+fn safezone_sync_color(
+    player: Single<&Transform, With<Player>>,
+    mut safezones: Query<(&Transform, &mut Sprite), With<Safezone>>,
+) {
+    for (sz_transform, mut sprite) in &mut safezones {
+        let distance = sz_transform
+            .translation
+            .xy()
+            .distance(player.translation.xy());
+
+        if distance < 256.0 {
+            let alpha = 0.25 + 0.75 * (1.0 - distance / 256.0);
+            if sprite.color.alpha() != alpha {
+                sprite.color.set_alpha(alpha);
+            }
+        }
     }
 }
 
 fn safezone_reached(
     mut commands: Commands,
     collisions: Collisions,
-    mut query_safezones: Query<(Entity, &mut Safezone), With<Safezone>>,
-    mut query_is_player: Query<&mut Player>,
+    query_safezones: Query<Entity, With<Safezone>>,
+    mut query_player: Query<&mut Player>,
 ) {
-    for (safezone_entity, mut safezone) in &mut query_safezones {
-        if safezone.active {
-            safezone.active = false;
-        }
-
+    for safezone_entity in &query_safezones {
         for collider in collisions.entities_colliding_with(safezone_entity) {
-            let Ok(mut player) = query_is_player.get_mut(collider) else {
+            let Ok(mut player) = query_player.get_mut(collider) else {
                 continue;
             };
 
             player.safezone_reached = true;
-            safezone.active = true;
 
             commands.queue(EndGame { win: true });
         }
