@@ -1,7 +1,7 @@
+use crate::game::EndGame;
 use crate::game::player::Player;
 use crate::game::screens::Screen;
-use crate::game::EndGame;
-use crate::{game, PausableSystems};
+use crate::{PausableSystems, game};
 use avian2d::prelude::{Collider, Collisions, Sensor};
 use bevy::prelude::*;
 use bevy::sprite::Anchor;

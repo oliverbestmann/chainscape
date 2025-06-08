@@ -1,10 +1,10 @@
+use crate::game::EndGame;
 use crate::game::cursor::{MainCamera, WorldCursor};
 use crate::game::enemy::{Awake, Enemy};
 use crate::game::movement::Movement;
 use crate::game::screens::Screen;
 use crate::game::squishy::Squishy;
-use crate::game::EndGame;
-use crate::{game, AppSystems, PausableSystems, Pause};
+use crate::{AppSystems, PausableSystems, Pause, game};
 use avian2d::prelude::{Collider, Collisions, LinearVelocity, RigidBody};
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
