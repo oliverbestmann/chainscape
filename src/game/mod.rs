@@ -1,3 +1,4 @@
+use ::rand::seq::IndexedRandom;
 use avian2d::prelude::{Collider, DefaultFriction, Friction, Gravity, RigidBody, SubstepCount};
 use bevy::ecs::system::RunSystemOnce;
 use bevy::image::ImageSampler;
@@ -5,7 +6,6 @@ use bevy::prelude::*;
 use bevy::sprite::Anchor;
 use fastnoise_lite::FastNoiseLite;
 use fastnoise_lite::NoiseType;
-use ::rand::seq::IndexedRandom;
 use std::f32::consts::PI;
 
 pub mod assets;
@@ -21,13 +21,13 @@ pub mod safezone;
 pub mod screens;
 pub mod squishy;
 
+use crate::Pause;
 use crate::game::cursor::MainCamera;
 use crate::game::highscore::{HighscoreClosed, RecordHighscore};
 use crate::game::player::Player;
-use crate::game::powerup::{powerup_bundle, Powerup};
-use crate::game::rand::{weighted_by_noise, Generate, Rand};
+use crate::game::powerup::{Powerup, powerup_bundle};
+use crate::game::rand::{Generate, Rand, weighted_by_noise};
 use crate::game::screens::Screen;
-use crate::Pause;
 pub use assets::Assets;
 
 pub fn plugin(app: &mut App) {

@@ -2,7 +2,7 @@ use crate::game::player::Player;
 use crate::game::rand::Rand;
 use crate::game::screens::Screen;
 use crate::game::squishy::Squishy;
-use crate::{game, AppSystems};
+use crate::{AppSystems, game};
 use avian2d::prelude::{
     AngularVelocity, Collider, ColliderDisabled, ExternalForce, LinearDamping, LinearVelocity,
     MaxLinearSpeed, RigidBody,
