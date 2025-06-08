@@ -27,11 +27,11 @@
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="px"
      inkscape:export-bgcolor="#00000000"
-     inkscape:zoom="2.4350877"
-     inkscape:cx="48.047551"
-     inkscape:cy="144.96398"
-     inkscape:window-width="1651"
-     inkscape:window-height="1191"
+     inkscape:zoom="13.774936"
+     inkscape:cx="247.36957"
+     inkscape:cy="108.53045"
+     inkscape:window-width="2504"
+     inkscape:window-height="1677"
      inkscape:window-x="26"
      inkscape:window-y="23"
      inkscape:window-maximized="0"
@@ -91,6 +91,39 @@
        inkscape:export-filename="explosion.png"
        inkscape:export-xdpi="192"
        inkscape:export-ydpi="192" />
+    <inkscape:page
+       x="41.916832"
+       y="20.209743"
+       width="16.933332"
+       height="16.933332"
+       id="page3"
+       margin="0"
+       bleed="0"
+       inkscape:export-filename="safezone.png"
+       inkscape:export-xdpi="384"
+       inkscape:export-ydpi="384" />
+    <inkscape:page
+       x="61.935432"
+       y="0"
+       width="16.933332"
+       height="16.933332"
+       id="page13"
+       margin="0"
+       bleed="0"
+       inkscape:export-filename="coin.png"
+       inkscape:export-xdpi="192.00005"
+       inkscape:export-ydpi="192.00005" />
+    <inkscape:page
+       x="61.935432"
+       y="20.209743"
+       width="16.933332"
+       height="16.933332"
+       id="page16"
+       margin="0"
+       bleed="0"
+       inkscape:export-filename="arrow.png"
+       inkscape:export-xdpi="96.000023"
+       inkscape:export-ydpi="96.000023" />
   </sodipodi:namedview>
   <defs
      id="defs1">
@@ -182,6 +215,71 @@
          result="blur"
          id="feGaussianBlur1" />
     </filter>
+    <filter
+       style="color-interpolation-filters:sRGB;"
+       inkscape:label="Blur"
+       id="filter8"
+       x="-0.32275063"
+       y="-0.32275063"
+       width="1.6455013"
+       height="1.6455013">
+      <feGaussianBlur
+         stdDeviation="1.4 1.4"
+         result="blur"
+         id="feGaussianBlur8" />
+    </filter>
+    <filter
+       style="color-interpolation-filters:sRGB;"
+       inkscape:label="Blur"
+       id="filter11"
+       x="-0.4519984"
+       y="-0.76757767"
+       width="1.9039968"
+       height="2.5351553">
+      <feGaussianBlur
+         stdDeviation="1.4 1.4"
+         result="blur"
+         id="feGaussianBlur11" />
+    </filter>
+    <filter
+       style="color-interpolation-filters:sRGB;"
+       inkscape:label="Blur"
+       id="filter15"
+       x="-0.33813118"
+       y="-0.35251767"
+       width="1.6762624"
+       height="1.7050353">
+      <feGaussianBlur
+         stdDeviation="1.4 1.4"
+         result="blur"
+         id="feGaussianBlur15" />
+    </filter>
+    <filter
+       style="color-interpolation-filters:sRGB;"
+       inkscape:label="Blur"
+       id="filter16"
+       x="-0.89408485"
+       y="-0.71205175"
+       width="2.7881697"
+       height="2.4241035">
+      <feGaussianBlur
+         stdDeviation="1.4 1.4"
+         result="blur"
+         id="feGaussianBlur16" />
+    </filter>
+    <filter
+       style="color-interpolation-filters:sRGB;"
+       inkscape:label="Blur"
+       id="filter17"
+       x="-1.0024704"
+       y="-0.76757769"
+       width="3.0049407"
+       height="2.5351554">
+      <feGaussianBlur
+         stdDeviation="1.4 1.4"
+         result="blur"
+         id="feGaussianBlur17" />
+    </filter>
   </defs>
   <g
      inkscape:label="Layer 1"
@@ -260,5 +358,99 @@
        d="m 47.016954,3.7009475 3.630013,2.3885093 1.990651,-2.3885093 -0.161009,3.149641 1.771417,0.4662414 -1.259116,1.3487649 2.10775,2.7351832 -4.039853,-0.980411 -2.576138,2.812018 -0.175645,-3.278721 -2.634687,-1.6393606 2.517588,-0.7634405 z"
        id="path7"
        sodipodi:nodetypes="ccccccccccccc" />
+    <rect
+       style="fill:#e6e6e6;stroke-width:0.365654"
+       id="rect3"
+       width="10.410514"
+       height="10.410514"
+       x="45.291496"
+       y="23.471676"
+       ry="1.0756251" />
+    <rect
+       style="fill:#e6e6e6;stroke-width:0.365654;filter:url(#filter8)"
+       id="rect4"
+       width="10.410514"
+       height="10.410514"
+       x="45.291496"
+       y="23.471676"
+       ry="1.0756251" />
+    <text
+       xml:space="preserve"
+       style="font-weight:bold;font-size:3.175px;line-height:0.7;font-family:'Liberation Mono';-inkscape-font-specification:'Liberation Mono Bold';text-align:start;letter-spacing:0px;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#e6e6e6;stroke-width:0.365654;filter:url(#filter11)"
+       x="46.721016"
+       y="28.612131"
+       id="text11"><tspan
+         sodipodi:role="line"
+         id="tspan10"
+         style="fill:#1a1a1a;stroke-width:0.365654"
+         x="46.721016"
+         y="28.612131">SAFE</tspan><tspan
+         sodipodi:role="line"
+         style="fill:#1a1a1a;stroke-width:0.365654"
+         x="46.721016"
+         y="30.834631"
+         id="tspan11">ZONE</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-weight:bold;font-size:3.175px;line-height:0.7;font-family:'Liberation Mono';-inkscape-font-specification:'Liberation Mono Bold';text-align:start;letter-spacing:0px;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#e6e6e6;stroke-width:0.365654"
+       x="46.721016"
+       y="28.612131"
+       id="text8"><tspan
+         sodipodi:role="line"
+         id="tspan8"
+         style="fill:#1a1a1a;stroke-width:0.365654"
+         x="46.721016"
+         y="28.612131">SAFE</tspan><tspan
+         sodipodi:role="line"
+         style="fill:#1a1a1a;stroke-width:0.365654"
+         x="46.721016"
+         y="30.834631"
+         id="tspan9">ZONE</tspan></text>
+    <ellipse
+       style="fill:#f9f9f9;stroke-width:0.365654"
+       id="path13"
+       cx="70.4021"
+       cy="8.4666662"
+       rx="4.9684858"
+       ry="4.7657185" />
+    <ellipse
+       style="fill:#f9f9f9;stroke-width:0.365654;filter:url(#filter15)"
+       id="ellipse15"
+       cx="70.4021"
+       cy="8.4666662"
+       rx="4.9684858"
+       ry="4.7657185" />
+    <text
+       xml:space="preserve"
+       style="font-weight:bold;font-size:6.95253px;line-height:0.7;font-family:'Liberation Mono';-inkscape-font-specification:'Liberation Mono Bold';text-align:start;letter-spacing:0px;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#1a1a1a;stroke-width:0.800699"
+       x="68.282051"
+       y="10.758149"
+       id="text15"><tspan
+         sodipodi:role="line"
+         id="tspan15"
+         style="fill:#1a1a1a;stroke-width:0.800699"
+         x="68.282051"
+         y="10.758149">€</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-weight:bold;font-size:6.95253px;line-height:0.7;font-family:'Liberation Mono';-inkscape-font-specification:'Liberation Mono Bold';text-align:start;letter-spacing:0px;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#1a1a1a;stroke-width:0.800699;filter:url(#filter16)"
+       x="68.282051"
+       y="10.758149"
+       id="text16"><tspan
+         sodipodi:role="line"
+         id="tspan16"
+         style="fill:#1a1a1a;stroke-width:0.800699"
+         x="68.282051"
+         y="10.758149">€</tspan></text>
+    <path
+       style="fill:#f9f9f9;stroke-width:0.365654"
+       d="m 73.753819,28.675884 -3.35172,-2.188178 v 4.377407 z"
+       id="path16"
+       sodipodi:nodetypes="cccc" />
+    <path
+       style="fill:#f9f9f9;stroke-width:0.365654;filter:url(#filter17)"
+       d="m 73.753819,28.675884 -3.35172,-2.188178 v 4.377407 z"
+       id="path17"
+       sodipodi:nodetypes="cccc" />
   </g>
 </svg>
