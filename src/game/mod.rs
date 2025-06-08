@@ -76,7 +76,7 @@ fn spawn_game(
 
     let random_pos = |radius| rand.vec2() * radius;
 
-    for pos in generator.generate(random_pos, 3, 384.0) {
+    for pos in generator.generate(random_pos, 3, 128.0) {
         // place the safe zone
         commands.spawn((
             Name::new("SafeZone"),

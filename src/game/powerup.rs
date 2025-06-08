@@ -2,6 +2,7 @@ use crate::game;
 use crate::game::enemy::Enemy;
 use crate::game::movement::Movement;
 use crate::game::player::Player;
+use crate::game::rand::Rand;
 use crate::game::screens::Screen;
 use crate::game::squishy::Squishy;
 use avian2d::prelude::{Collider, Collisions, Sensor};
@@ -9,12 +10,19 @@ use bevy::ecs::system::RunSystemOnce;
 use bevy::math::FloatPow;
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
+use rand::Rng;
 use std::time::Duration;
 
 pub fn plugin(app: &mut App) {
     app.add_systems(
         Update,
-        (collect_powerup, explosion_fade_out).run_if(in_state(Screen::Gameplay)),
+        (
+            collect_powerup,
+            handle_delayed_explosions,
+            explosion_fade_out,
+        )
+            .chain()
+            .run_if(in_state(Screen::Gameplay)),
     );
 }
 
@@ -80,19 +88,52 @@ fn apply_powerup_coin(mut player: Single<&mut Player>) {
     player.bonus_score += 10;
 }
 
-fn apply_powerup_explosion(
+fn apply_powerup_explosion(mut commands: Commands, player: Single<Entity, With<Player>>) {
+    let label = commands
+        .spawn((Text2d::new("Foobar"), Anchor::BottomLeft))
+        .id();
+
+    commands.entity(*player).insert(DelayedExplosion {
+        timer: Timer::from_seconds(2.0, TimerMode::Once),
+        label,
+    });
+}
+
+fn handle_delayed_explosions(
     mut commands: Commands,
-    player: Single<&Transform, With<Player>>,
-    enemies: Query<(Entity, &Transform), With<Enemy>>,
+    mut rand: ResMut<Rand>,
+    mut player: Single<(Entity, &mut DelayedExplosion, &mut Player, &Transform), Without<Text2d>>,
+    mut label: Query<(&mut Text2d, &mut Transform)>,
+    enemies: Query<(Entity, &Transform), (With<Enemy>, Without<Text2d>)>,
     assets: Res<game::Assets>,
+    time: Res<Time>,
 ) {
-    let blast_radius = 256.0;
+    let (player_entity, explosion, player, player_transform) = &mut *player;
+
+    if !explosion.timer.tick(time.delta()).just_finished() {
+        if let Ok((mut text, mut transform)) = label.get_mut(explosion.label) {
+            transform.translation.x = player_transform.translation.x + 24.0;
+            transform.translation.y = player_transform.translation.y + 24.0;
+
+            text.0 = format!("boom in {:1.2}s", explosion.timer.remaining_secs());
+        }
+
+        return;
+    }
+
+    // remove the label if it still exists
+    commands.entity(explosion.label).try_despawn();
+
+    // remove the scheduled explosion from the player
+    commands.entity(*player_entity).remove::<DelayedExplosion>();
+
+    let blast_radius = rand.random_range(200.0..300.0);
 
     for (enemy, enemy_transform) in enemies {
         let distance = enemy_transform
             .translation
             .xy()
-            .distance(player.translation.xy());
+            .distance(player_transform.translation.xy());
 
         if distance > blast_radius {
             continue;
@@ -100,13 +141,16 @@ fn apply_powerup_explosion(
 
         // kill enemy
         commands.entity(enemy).despawn();
+
+        // and count for scoring
+        player.kill_count += 1;
     }
 
     // spawn an explosion circle
     commands.spawn((
         Name::new("Explosion"),
         StateScoped(Screen::Gameplay),
-        Transform::from_translation(player.translation.with_z(0.0)),
+        Transform::from_translation(player_transform.translation.with_z(0.0)),
         Explosion(Timer::from_seconds(0.25, TimerMode::Once)),
         Sprite {
             image: assets.circle.clone(),
@@ -116,6 +160,12 @@ fn apply_powerup_explosion(
             ..default()
         },
     ));
+}
+
+#[derive(Component)]
+struct DelayedExplosion {
+    timer: Timer,
+    label: Entity,
 }
 
 #[derive(Component)]
